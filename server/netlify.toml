@@ -1,0 +1,9 @@
+[build]
+  functions = "functions"
+
+[build.environment]
+  NODE_ENV = "production"
+
+[[functions]]
+  name = "server"
+  runtime = "nodejs18.x"
