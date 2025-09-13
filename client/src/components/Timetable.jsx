@@ -264,15 +264,15 @@ function Timetable() {
         )}
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
         {classes.map((classItem, index) => (
-          <Grid item xs={12} sm={6} md={4} key={classItem._id}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={classItem._id}>
             <Fade in={true} timeout={300 + index * 100}>
               <Card 
                 sx={{ cursor: 'pointer', borderRadius: 3, transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 25px rgba(0,0,0,0.15)' } }}
                 onClick={() => handleClassClick(classItem)}
               >
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <Avatar sx={{ background: 'linear-gradient(45deg, #2563eb, #1d4ed8)' }}>
                       <Class />

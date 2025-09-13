@@ -78,13 +78,39 @@ router.patch('/:id/status', auth, async (req, res) => {
   }
 });
 
-// Delete item
+// Update item (admin or owner)
+router.put('/:id', auth, lostFoundValidation, async (req, res) => {
+  try {
+    const { type, title, description, category, location, contactInfo } = req.body;
+    
+    const filter = req.user.role === 'admin' 
+      ? { _id: req.params.id }
+      : { _id: req.params.id, userId: req.user._id };
+    
+    const item = await LostFound.findOneAndUpdate(
+      filter,
+      { type, title, description, category, location, contactInfo },
+      { new: true }
+    ).populate('userId', 'name studentId');
+    
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Delete item (admin or owner)
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const item = await LostFound.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user._id
-    });
+    const filter = req.user.role === 'admin' 
+      ? { _id: req.params.id }
+      : { _id: req.params.id, userId: req.user._id };
+    
+    const item = await LostFound.findOneAndDelete(filter);
     
     if (!item) {
       return res.status(404).json({ message: 'Item not found' });

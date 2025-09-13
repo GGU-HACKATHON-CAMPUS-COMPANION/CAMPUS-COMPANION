@@ -111,9 +111,9 @@ function Announcements() {
 
   if (loading) {
     return (
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
         {[1, 2, 3, 4].map((item) => (
-          <Grid size={{ xs: 12, md: 6 }} key={item}>
+          <Grid item xs={12} sm={6} md={6} lg={4} key={item}>
             <Card>
               <CardContent>
                 <Skeleton variant="text" width="60%" height={32} />
@@ -227,7 +227,7 @@ function Announcements() {
 
       <Grid container spacing={3}>
         {filteredAnnouncements.map((announcement, index) => (
-          <Grid size={{ xs: 12, md: 6 }} key={announcement._id}>
+          <Grid item xs={12} sm={6} md={6} lg={4} key={announcement._id}>
             <Fade in={true} timeout={300 + index * 100}>
               <Card 
                 sx={{ 
@@ -247,7 +247,7 @@ function Announcements() {
                     background: `linear-gradient(90deg, ${getCategoryColor(announcement.category)}, ${getCategoryColor(announcement.category)}80)` 
                   }} 
                 />
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <Avatar 
                       sx={{ 

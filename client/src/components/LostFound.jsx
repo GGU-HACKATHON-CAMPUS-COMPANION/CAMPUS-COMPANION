@@ -20,6 +20,7 @@ function LostFound() {
   const [tab, setTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
     type: 'lost', title: '', description: '', category: '', location: '', contactInfo: ''
   });
@@ -63,16 +64,34 @@ function LostFound() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/lostfound', formData);
+      if (editingItem) {
+        await api.put(`/lostfound/${editingItem._id}`, formData);
+      } else {
+        await api.post('/lostfound', formData);
+      }
       setOpen(false);
+      setEditingItem(null);
       setFormData({
         type: 'lost', title: '', description: '', category: '', location: '', contactInfo: ''
       });
       fetchItems();
     } catch (error) {
-      console.error('Error posting item:', error.response?.data || error);
-      alert(error.response?.data?.message || 'Error posting item');
+      console.error('Error saving item:', error.response?.data || error);
+      alert(error.response?.data?.message || 'Error saving item');
     }
+  };
+
+  const handleEdit = (item) => {
+    setEditingItem(item);
+    setFormData({
+      type: item.type,
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      location: item.location,
+      contactInfo: item.contactInfo
+    });
+    setOpen(true);
   };
 
   const handleDelete = async (id) => {
@@ -140,6 +159,17 @@ function LostFound() {
               Help reunite lost items with their owners
             </Typography>
           </Box>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            onClick={() => setOpen(true)}
+            sx={{
+              borderRadius: 2,
+              background: 'linear-gradient(45deg, #2563eb, #1d4ed8)'
+            }}
+          >
+            Add Item
+          </Button>
         </Box>
         
         <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
@@ -162,7 +192,6 @@ function LostFound() {
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
                 <Select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
@@ -198,9 +227,9 @@ function LostFound() {
         </Paper>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
         {filteredItems.map((item, index) => (
-          <Grid size={{ xs: 12, md: 6 }} key={item._id}>
+          <Grid item xs={12} sm={6} md={6} lg={4} key={item._id}>
             <Fade in={true} timeout={300 + index * 100}>
               <Card sx={{ 
                 height: '100%',
@@ -220,7 +249,7 @@ function LostFound() {
                       : 'linear-gradient(90deg, #10b981, #059669)'
                   }} 
                 />
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <Avatar 
                       sx={{ 
@@ -254,18 +283,32 @@ function LostFound() {
                         />
                       </Box>
                     </Box>
-                    {(user?.role === 'admin' || item.userId?._id === user?.id) && (
-                      <Tooltip title="Delete item">
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleDelete(item._id)} 
-                          color="error"
-                          sx={{ '&:hover': { bgcolor: '#ef444420' } }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
+                    <Box display="flex" gap={1}>
+                      {user?.role === 'admin' && (
+                        <Tooltip title="Edit item">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleEdit(item)} 
+                            color="primary"
+                            sx={{ '&:hover': { bgcolor: 'rgba(37, 99, 235, 0.1)' } }}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {(user?.role === 'admin' || item.userId?._id === user?.id) && (
+                        <Tooltip title="Delete item">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleDelete(item._id)} 
+                            color="error"
+                            sx={{ '&:hover': { bgcolor: '#ef444420' } }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
                   </Box>
                   
                   <Typography 
@@ -356,8 +399,8 @@ function LostFound() {
         </Fab>
       </Tooltip>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Post Lost/Found Item</DialogTitle>
+      <Dialog open={open} onClose={() => { setOpen(false); setEditingItem(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle>{editingItem ? 'Edit Item' : 'Post Lost/Found Item'}</DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
             <FormControl fullWidth margin="normal">
@@ -408,8 +451,8 @@ function LostFound() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">Post</Button>
+          <Button onClick={() => { setOpen(false); setEditingItem(null); }}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained">{editingItem ? 'Update' : 'Post'}</Button>
         </DialogActions>
       </Dialog>
     </Box>

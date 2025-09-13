@@ -14,6 +14,7 @@ import LostFound from './LostFound';
 import PersonalTimetable from './PersonalTimetable';
 import NotificationCenter from './NotificationCenter';
 import Chatbot from './Chatbot';
+import Profile from './Profile';
 
 function TabPanel({ children, value, index }) {
   return (
@@ -40,6 +41,11 @@ function Dashboard() {
     setAnchorEl(null);
   };
   
+  const handleProfileClick = () => {
+    setTab(4);
+    handleMenuClose();
+  };
+  
   const handleLogout = () => {
     handleMenuClose();
     logout();
@@ -55,7 +61,7 @@ function Dashboard() {
           borderBottom: '1px solid rgba(255,255,255,0.1)'
         }}
       >
-        <Toolbar sx={{ py: 1 }}>
+        <Toolbar sx={{ py: 1, px: { xs: 1, sm: 2 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <Avatar sx={{ 
               mr: 2, 
@@ -63,7 +69,7 @@ function Dashboard() {
             }}>
               <School />
             </Avatar>
-            <Box>
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Campus Companion
               </Typography>
@@ -71,9 +77,14 @@ function Dashboard() {
                 Welcome back, {user?.name}
               </Typography>
             </Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Campus
+              </Typography>
+            </Box>
           </Box>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
             <NotificationCenter />
             <Button
               color="inherit"
@@ -110,17 +121,14 @@ function Dashboard() {
                 }
               }}
             >
-              <MenuItem onClick={handleMenuClose}>
+              <MenuItem onClick={handleProfileClick}>
                 <ListItemIcon>
                   <AccountCircle />
                 </ListItemIcon>
                 Profile
               </MenuItem>
               <MenuItem onClick={handleMenuClose}>
-                <ListItemIcon>
-                  <Settings />
-                </ListItemIcon>
-                Settings
+                
               </MenuItem>
               <Divider />
               <MenuItem onClick={handleLogout}>
@@ -134,7 +142,7 @@ function Dashboard() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2, md: 3 }, px: { xs: 1, sm: 2 } }}>
         <Paper 
           elevation={0} 
           sx={{ 
@@ -146,7 +154,9 @@ function Dashboard() {
           <Tabs 
             value={tab} 
             onChange={(e, newValue) => setTab(newValue)} 
-            centered
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               bgcolor: '#FFFFFF',
               '& .MuiTabs-indicator': {
@@ -155,11 +165,17 @@ function Dashboard() {
                 borderRadius: 2
               },
               '& .MuiTab-root': {
-                minHeight: 72,
+                minHeight: { xs: 60, sm: 72 },
                 fontWeight: 600,
-                fontSize: '1rem',
+                fontSize: { xs: '0.8rem', sm: '1rem' },
+                minWidth: { xs: 120, sm: 160 },
                 '&.Mui-selected': {
                   color: '#568F87'
+                }
+              },
+              '& .MuiTabs-scrollButtons': {
+                '&.Mui-disabled': {
+                  opacity: 0.3
                 }
               }
             }}
@@ -188,6 +204,12 @@ function Dashboard() {
               iconPosition="start"
               sx={{ gap: 1 }}
             />
+            <Tab 
+              icon={<Person />} 
+              label="Profile" 
+              iconPosition="start"
+              sx={{ gap: 1 }}
+            />
           </Tabs>
 
           <TabPanel value={tab} index={0}>
@@ -201,6 +223,9 @@ function Dashboard() {
           </TabPanel>
           <TabPanel value={tab} index={3}>
             <PersonalTimetable />
+          </TabPanel>
+          <TabPanel value={tab} index={4}>
+            <Profile />
           </TabPanel>
         </Paper>
       </Container>
