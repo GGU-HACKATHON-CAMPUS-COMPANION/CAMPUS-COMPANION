@@ -16,8 +16,19 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+
+// CORS configuration for production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173', 
+  'http://127.0.0.1:5500',
+  process.env.FRONTEND_URL,
+  process.env.VERCEL_URL,
+  process.env.NETLIFY_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5500'],
+  origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -143,7 +154,16 @@ const connectDB = async () => {
 
 connectDB();
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+const PORT = process.env.PORT || 5001;
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    mongoose.connection.close();
+    process.exit(0);
+  });
 });

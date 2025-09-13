@@ -72,8 +72,8 @@ function PersonalTimetable() {
       <Grid container spacing={3}>
         {days.map(day => (
           <Grid size={{ xs: 12, md: 6, lg: 4 }} key={day}>
-            <Card sx={{ minHeight: 300 }}>
-              <CardContent>
+            <Card sx={{ minHeight: { xs: 250, sm: 300 } }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
                   {day}
                 </Typography>
@@ -86,7 +86,10 @@ function PersonalTimetable() {
                         bgcolor: `${getTypeColor(event.type)}15`,
                         border: `1px solid ${getTypeColor(event.type)}30`
                       }}>
-                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                        <CardContent sx={{ 
+                          p: { xs: 1.5, sm: 2 }, 
+                          '&:last-child': { pb: { xs: 1.5, sm: 2 } } 
+                        }}>
                           <Box display="flex" justifyContent="space-between" alignItems="start">
                             <Box flex={1}>
                               <Box display="flex" alignItems="center" gap={1} mb={1}>
@@ -144,8 +147,8 @@ function PersonalTimetable() {
           onClick={() => setOpen(true)}
           sx={{
             position: 'fixed',
-            bottom: 100,
-            right: 24,
+            bottom: { xs: 140, sm: 100 },
+            left: { xs: 16, sm: 24 },
             background: 'linear-gradient(45deg, #568F87, #064232)',
             '&:hover': {
               background: 'linear-gradient(45deg, #064232, #568F87)',

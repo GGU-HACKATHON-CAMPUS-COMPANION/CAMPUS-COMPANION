@@ -142,7 +142,7 @@ function LostFound() {
           </Box>
         </Box>
         
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 3 }}>
           <Grid container spacing={3} alignItems="center">
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
@@ -220,19 +220,23 @@ function LostFound() {
                       : 'linear-gradient(90deg, #10b981, #059669)'
                   }} 
                 />
-                <CardContent sx={{ p: 3 }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <Avatar 
                       sx={{ 
                         bgcolor: getCategoryColor(item.category),
-                        width: 40,
-                        height: 40
+                        width: { xs: 32, sm: 40 },
+                        height: { xs: 32, sm: 40 }
                       }}
                     >
                       {getCategoryIcon(item.category)}
                     </Avatar>
                     <Box flex={1}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 600, 
+                        mb: 0.5,
+                        fontSize: { xs: '1rem', sm: '1.25rem' }
+                      }}>
                         {item.title}
                       </Typography>
                       <Box display="flex" alignItems="center" gap={1}>
@@ -343,8 +347,8 @@ function LostFound() {
           onClick={() => setOpen(true)}
           sx={{
             position: 'fixed',
-            bottom: 24,
-            right: 24,
+            bottom: { xs: 80, sm: 24 },
+            left: { xs: 16, sm: 24 },
             background: 'linear-gradient(45deg, #2563eb, #1d4ed8)',
             '&:hover': {
               background: 'linear-gradient(45deg, #1d4ed8, #1e40af)',

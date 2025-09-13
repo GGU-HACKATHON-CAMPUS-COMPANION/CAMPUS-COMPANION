@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, TextField, Button, Paper, Typography, Avatar, CircularProgress, Fab, Dialog, DialogContent, IconButton, Slide } from '@mui/material';
-import { Send as SendIcon, SmartToy as BotIcon, Person as PersonIcon, Close } from '@mui/icons-material';
+import { Box, TextField, Button, Paper, Typography, Avatar, CircularProgress, Fab, Dialog, DialogContent, IconButton, Slide, Tooltip } from '@mui/material';
+import { Send as SendIcon, SmartToy as BotIcon, Person as PersonIcon, Close, Chat } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -81,37 +81,41 @@ const Chatbot = () => {
 
   return (
     <>
-      <Fab
-        color="primary"
-        onClick={() => setOpen(true)}
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          background: 'linear-gradient(45deg, #568F87, #F5BABB)',
-          '&:hover': {
-            background: 'linear-gradient(45deg, #F5BABB, #568F87)',
-            transform: 'scale(1.1)'
-          },
-          boxShadow: '0 8px 25px rgba(86, 143, 135, 0.4)',
-          transition: 'all 0.3s ease'
-        }}
-      >
-        <BotIcon sx={{ fontSize: 28 }} />
-      </Fab>
+      <Tooltip title="Chat with Campus Assistant" placement="right">
+        <Fab
+          color="primary"
+          onClick={() => setOpen(true)}
+          sx={{
+            position: 'fixed',
+            bottom: { xs: 16, sm: 24 },
+            right: { xs: 16, sm: 24 },
+            background: 'linear-gradient(45deg, #568F87, #F5BABB)',
+            '&:hover': {
+              background: 'linear-gradient(45deg, #F5BABB, #568F87)',
+              transform: 'scale(1.1)'
+            },
+            boxShadow: '0 8px 25px rgba(86, 143, 135, 0.4)',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <BotIcon sx={{ fontSize: 28 }} />
+        </Fab>
+      </Tooltip>
 
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
+        maxWidth={false}
         TransitionComponent={Transition}
         PaperProps={{
           sx: {
             position: 'fixed',
-            bottom: 100,
-            right: 24,
+            bottom: { xs: 80, sm: 90 },
+            right: { xs: 16, sm: 24 },
             m: 0,
-            width: 380,
-            height: 500,
+            width: { xs: 'calc(100vw - 32px)', sm: 380 },
+            maxWidth: { xs: 'calc(100vw - 32px)', sm: 380 },
+            height: { xs: 'calc(100vh - 160px)', sm: 480 },
             borderRadius: 4,
             boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
             border: '2px solid #F5BABB'
