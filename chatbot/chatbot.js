@@ -15,14 +15,19 @@ import { MongoClient } from 'mongodb';
 dotenv.config();
 
 // Server Configuration
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5001';
 const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'campus_companion';
 
 // MongoDB Connection
 async function connectToMongoDB() {
     try {
-        const client = await MongoClient.connect(MONGODB_URI);
+        const client = await MongoClient.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            ssl: true,
+            tlsAllowInvalidCertificates: true
+        });
         return client.db(DB_NAME);
     } catch (error) {
         console.error('MongoDB connection error:', error);
@@ -75,6 +80,7 @@ You're like a supportive senior student who genuinely cares about their academic
 - Share relevant tips and suggestions beyond just answering questions
 - Use emojis occasionally to add personality 😊
 - Remember context from previous conversations when possible
+- **CRITICAL**: When you receive data in JSON format, NEVER show the raw JSON to users. Instead, interpret and present the information in a natural, conversational way
 
 🔹 Sample Responses:
 - "Hey! I see you have English class in 30 minutes. Since you missed Wednesday's class, you might want to quickly review the assignment on Shakespeare before heading over!"
@@ -82,6 +88,13 @@ You're like a supportive senior student who genuinely cares about their academic
 - "I noticed the library extended hours - perfect timing for your upcoming finals! Need help planning a study schedule?"
 
 Act like a **caring academic mentor and friend** who's always ready to help students succeed in their campus journey.
+
+🚨 **IMPORTANT DATA PROCESSING RULES**:
+- When you receive timetable data, present it as: "You have [Subject] with [Instructor] from [StartTime] to [EndTime] in room [Room]"
+- When you receive announcements, present them as: "Here's the latest: [Title] - [Content]"
+- When you receive lost & found data, present it naturally: "I found a [Title]: [Description]. Contact: [ContactInfo]"
+- NEVER show raw JSON, database IDs, or technical data to users
+- Always interpret and humanize the data before presenting it
 `;
 
 // API Helper Functions with Real Backend Integration
@@ -241,8 +254,11 @@ async function getEnhancedResponse(message, userId) {
         const timetable = await getTimetable(userId, dayFilter);
         
         if (timetable.length > 0) {
-            contextData += `\nReal-time Timetable Data: ${JSON.stringify(timetable)}`;
-            contextData += `\nCurrent Day Filter: ${dayFilter || 'All days'}`;
+            contextData += `\nTimetable Information Available: You have ${timetable.length} classes. Process this data and present it naturally to the user:`;
+            timetable.forEach(cls => {
+                contextData += `\n- ${cls.subject} with ${cls.instructor} from ${cls.startTime} to ${cls.endTime} in room ${cls.room} (${cls.day})`;
+            });
+            contextData += `\nDay Filter: ${dayFilter || 'All days'}`;
         }
         
         // Add class content data for academic mentoring
@@ -267,9 +283,12 @@ async function getEnhancedResponse(message, userId) {
         
         const announcements = await getAnnouncements(category, 5);
         if (announcements.length > 0) {
-            contextData += `\nReal-time Announcements: ${JSON.stringify(announcements)}`;
+            contextData += `\nAnnouncement Information Available: Present these naturally to the user:`;
+            announcements.forEach(ann => {
+                contextData += `\n- ${ann.title}: ${ann.content} (${ann.category} priority: ${ann.priority})`;
+            });
             contextData += `\nCategory Filter: ${category || 'All categories'}`;
-            contextData += `\nEngagement Context: Use real announcement data to provide current campus updates. Show enthusiasm and connect announcements to student needs.`;
+            contextData += `\nEngagement Context: Present announcements enthusiastically and connect them to student needs.`;
         }
     }
     
@@ -293,7 +312,10 @@ async function getEnhancedResponse(message, userId) {
         
         const lostFoundItems = await searchLostFound(searchQuery, type, category);
         if (lostFoundItems.length > 0) {
-            contextData += `\nReal-time Lost & Found Items: ${JSON.stringify(lostFoundItems)}`;
+            contextData += `\nLost & Found Items Available: Present these naturally to help the user:`;
+            lostFoundItems.forEach(item => {
+                contextData += `\n- ${item.title}: ${item.description} (${item.type}) - Contact: ${item.contactInfo || 'See campus security'}`;
+            });
             contextData += `\nSearch Parameters: type=${type}, category=${category}, query=${searchQuery}`;
         }
         contextData += `\nEmpathy Context: Use real lost & found data to help students. Be understanding, offer practical help, and provide emotional support with specific item information.`;
@@ -331,45 +353,23 @@ async function getEnhancedResponse(message, userId) {
     return contextData;
 }
 
-// Load Conversation History from MongoDB
-async function loadConversationHistory(userId) {
-    try {
-        const db = await connectToMongoDB();
-        if (db) {
-            const collection = db.collection('conversations');
-            const userChat = await collection.findOne({ userId });
-            if (userChat && userChat.history) {
-                return userChat.history;
-            }
-        }
-        return [{
-            role: 'user',
-            parts: [{ text: campusCompanionPrompt }]
-        }];
-    } catch (error) {
-        console.error('Error loading conversation history:', error);
-        return [{
-            role: 'user',
-            parts: [{ text: campusCompanionPrompt }]
-        }];
+// In-memory conversation storage (fallback)
+const conversations = new Map();
+
+// Load Conversation History
+function loadConversationHistory(userId) {
+    if (conversations.has(userId)) {
+        return conversations.get(userId);
     }
+    return [{
+        role: 'user',
+        parts: [{ text: campusCompanionPrompt }]
+    }];
 }
 
-// Save Conversation History to MongoDB
-async function saveConversationHistory(userId, history) {
-    try {
-        const db = await connectToMongoDB();
-        if (db) {
-            const collection = db.collection('conversations');
-            await collection.updateOne(
-                { userId },
-                { $set: { userId, history, updatedAt: new Date() } },
-                { upsert: true }
-            );
-        }
-    } catch (error) {
-        console.error('Error saving conversation history:', error);
-    }
+// Save Conversation History
+function saveConversationHistory(userId, history) {
+    conversations.set(userId, history);
 }
 
 // Initialize Express app
@@ -421,7 +421,7 @@ app.post('/chat', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'Missing userId or message/image' });
         }
 
-        let history = await loadConversationHistory(userId);
+        let history = loadConversationHistory(userId);
 
         // Ensure system prompt is included
         if (history.length === 0) {
@@ -464,7 +464,7 @@ app.post('/chat', upload.single('image'), async (req, res) => {
             { role: 'model', parts: [{ text: response }] }
         );
 
-        await saveConversationHistory(userId, history);
+        saveConversationHistory(userId, history);
         res.json({ response });
     } catch (error) {
         console.error('Detailed error:', error);

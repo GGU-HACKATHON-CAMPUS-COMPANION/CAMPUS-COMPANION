@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, TextField, Button, Paper, Typography, Avatar, CircularProgress } from '@mui/material';
 import { Send as SendIcon, SmartToy as BotIcon, Person as PersonIcon } from '@mui/icons-material';
+import ReactMarkdown from 'react-markdown';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
@@ -37,12 +38,29 @@ const Chatbot = () => {
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
       const data = await response.json();
       const botMessage = { role: 'bot', content: data.response };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
-      console.error('Error:', error);
-      const errorMessage = { role: 'bot', content: 'Sorry, I encountered an error. Please try again.' };
+      console.error('Chatbot connection error:', error);
+      let errorMessage;
+      
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = { 
+          role: 'bot', 
+          content: '🚫 **Chatbot server is not running!**\n\nPlease start the chatbot server:\n```bash\ncd chatbot\nnpm start\n```\n\nThe chatbot should be running on http://localhost:3000' 
+        };
+      } else {
+        errorMessage = { 
+          role: 'bot', 
+          content: `❌ **Connection Error**\n\nSorry, I encountered an error: ${error.message}\n\nPlease check if the chatbot server is running on port 3000.` 
+        };
+      }
+      
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setLoading(false);
@@ -82,9 +100,13 @@ const Chatbot = () => {
               <Avatar sx={{ bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main' }}>
                 {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
               </Avatar>
-              <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-                {message.content}
-              </Typography>
+              {message.role === 'bot' ? (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              ) : (
+                <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+                  {message.content}
+                </Typography>
+              )}
             </Box>
           </Paper>
         ))}
