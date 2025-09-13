@@ -6,6 +6,11 @@ const classTimingSchema = new mongoose.Schema({
     ref: 'Class',
     required: true
   },
+  subject: {
+    type: String,
+    required: true,
+    trim: true
+  },
   day: {
     type: String,
     required: true,
