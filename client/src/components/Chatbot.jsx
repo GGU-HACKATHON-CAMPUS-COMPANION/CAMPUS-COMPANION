@@ -1,167 +1,155 @@
-import { useState } from 'react';
-import {
-  Fab, Dialog, DialogTitle, DialogContent, Box, TextField, IconButton,
-  Typography, Paper, Avatar, Slide, InputAdornment, Tooltip
-} from '@mui/material';
-import {
-  Chat, Close, Send, SmartToy, Person
-} from '@mui/icons-material';
+import React, { useState, useRef, useEffect } from 'react';
+import { Box, TextField, Button, Paper, Typography, Avatar, CircularProgress } from '@mui/material';
+import { Send as SendIcon, SmartToy as BotIcon, Person as PersonIcon } from '@mui/icons-material';
+import ReactMarkdown from 'react-markdown';
 
-function Chatbot() {
-  const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hi! I'm your Campus Companion assistant. How can I help you today?", sender: 'bot' }
-  ]);
+const Chatbot = () => {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+  const userId = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'guest';
 
-  const handleSend = () => {
-    if (!input.trim()) return;
-    
-    const userMessage = { id: Date.now(), text: input, sender: 'user' };
-    setMessages(prev => [...prev, userMessage]);
-    
-    // Bot responses
-    setTimeout(() => {
-      const botResponse = getBotResponse(input);
-      setMessages(prev => [...prev, { id: Date.now() + 1, text: botResponse, sender: 'bot' }]);
-    }, 1000);
-    
-    setInput('');
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const getBotResponse = (message) => {
-    const msg = message.toLowerCase();
-    if (msg.includes('announcement') || msg.includes('news')) {
-      return "You can check the latest campus announcements in the Announcements tab. They're organized by category and priority!";
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    const userMessage = { role: 'user', content: input };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:3000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userId,
+          message: input
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const botMessage = { role: 'bot', content: data.response };
+      setMessages(prev => [...prev, botMessage]);
+    } catch (error) {
+      console.error('Chatbot connection error:', error);
+      let errorMessage;
+      
+      if (error.message.includes('Failed to fetch')) {
+        errorMessage = { 
+          role: 'bot', 
+          content: '🚫 **Chatbot server is not running!**\n\nPlease start the chatbot server:\n```bash\ncd chatbot\nnpm start\n```\n\nThe chatbot should be running on http://localhost:3000' 
+        };
+      } else {
+        errorMessage = { 
+          role: 'bot', 
+          content: `❌ **Connection Error**\n\nSorry, I encountered an error: ${error.message}\n\nPlease check if the chatbot server is running on port 3000.` 
+        };
+      }
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
     }
-    if (msg.includes('timetable') || msg.includes('schedule') || msg.includes('class')) {
-      return "Your class timetable is available in the Timetable section. You can view your weekly schedule there!";
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
-    if (msg.includes('lost') || msg.includes('found')) {
-      return "Check the Lost & Found section to report lost items or see if someone found your belongings!";
-    }
-    if (msg.includes('help') || msg.includes('how')) {
-      return "I can help you navigate the campus companion app! Ask me about announcements, timetables, or lost & found items.";
-    }
-    return "I'm here to help! You can ask me about announcements, timetables, lost & found items, or general campus information.";
   };
 
   return (
-    <>
-      <Tooltip title="Chat with Campus Assistant" placement="right">
-        <Fab
-          color="primary"
-          onClick={() => setOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 180,
-            background: 'linear-gradient(45deg, #568F87, #064232)',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #064232, #568F87)',
-            },
-            boxShadow: '0 8px 25px rgba(86, 143, 135, 0.3)'
-          }}
-        >
-          <Chat />
-        </Fab>
-      </Tooltip>
-
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            position: 'fixed',
-            bottom: 100,
-            right: 24,
-            m: 0,
-            maxWidth: 400,
-            height: 500,
-            borderRadius: 3
-          }
-        }}
-      >
-        <DialogTitle sx={{
-          background: 'linear-gradient(135deg, #568F87 0%, #064232 100%)',
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          py: 2
-        }}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <SmartToy />
-            <Typography variant="h6">Campus Assistant</Typography>
-          </Box>
-          <IconButton
-            onClick={() => setOpen(false)}
-            sx={{ color: 'white' }}
+    <Box sx={{ height: '600px', display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="h6" sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        🤖 Campus Companion AI
+      </Typography>
+      
+      <Box sx={{ flex: 1, overflow: 'auto', p: 1 }}>
+        {messages.length === 0 && (
+          <Paper sx={{ p: 2, mb: 1, bgcolor: 'grey.100' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <BotIcon />
+              </Avatar>
+              <Typography>
+                Hi! I'm your Campus Companion. Ask me about your timetable, announcements, lost & found items, or any academic help you need! 😊
+              </Typography>
+            </Box>
+          </Paper>
+        )}
+        
+        {messages.map((message, index) => (
+          <Paper key={index} sx={{ p: 2, mb: 1, bgcolor: message.role === 'user' ? 'primary.light' : 'grey.100' }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+              <Avatar sx={{ bgcolor: message.role === 'user' ? 'primary.main' : 'secondary.main' }}>
+                {message.role === 'user' ? <PersonIcon /> : <BotIcon />}
+              </Avatar>
+              {message.role === 'bot' ? (
+                <ReactMarkdown>{message.content}</ReactMarkdown>
+              ) : (
+                <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+                  {message.content}
+                </Typography>
+              )}
+            </Box>
+          </Paper>
+        ))}
+        
+        {loading && (
+          <Paper sx={{ p: 2, mb: 1, bgcolor: 'grey.100' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                <BotIcon />
+              </Avatar>
+              <CircularProgress size={20} />
+              <Typography>Thinking...</Typography>
+            </Box>
+          </Paper>
+        )}
+        
+        <div ref={messagesEndRef} />
+      </Box>
+      
+      <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <TextField
+            fullWidth
+            multiline
+            maxRows={3}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask me anything about campus life..."
+            disabled={loading}
+          />
+          <Button
+            variant="contained"
+            onClick={sendMessage}
+            disabled={loading || !input.trim()}
+            sx={{ minWidth: 'auto', px: 2 }}
           >
-            <Close />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent sx={{ p: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ flex: 1, p: 2, overflowY: 'auto', maxHeight: 350 }}>
-            {messages.map((message) => (
-              <Box
-                key={message.id}
-                display="flex"
-                justifyContent={message.sender === 'user' ? 'flex-end' : 'flex-start'}
-                mb={2}
-              >
-                <Box display="flex" alignItems="flex-start" gap={1} maxWidth="80%">
-                  {message.sender === 'bot' && (
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: '#568F87' }}>
-                      <SmartToy sx={{ fontSize: 18 }} />
-                    </Avatar>
-                  )}
-                  <Paper
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: message.sender === 'user' ? '#568F87' : '#F5BABB',
-                      color: message.sender === 'user' ? 'white' : '#064232'
-                    }}
-                  >
-                    <Typography variant="body2">{message.text}</Typography>
-                  </Paper>
-                  {message.sender === 'user' && (
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: '#F5BABB' }}>
-                      <Person sx={{ fontSize: 18 }} />
-                    </Avatar>
-                  )}
-                </Box>
-              </Box>
-            ))}
-          </Box>
-
-          <Box sx={{ p: 2, borderTop: '1px solid #F5BABB' }}>
-            <TextField
-              fullWidth
-              placeholder="Type your message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton onClick={handleSend} color="primary">
-                      <Send />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-            />
-          </Box>
-        </DialogContent>
-      </Dialog>
-    </>
+            <SendIcon />
+          </Button>
+        </Box>
+      </Box>
+    </Box>
   );
-}
+};
 
 export default Chatbot;

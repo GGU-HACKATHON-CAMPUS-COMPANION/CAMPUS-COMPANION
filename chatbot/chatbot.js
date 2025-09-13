@@ -15,14 +15,19 @@ import { MongoClient } from 'mongodb';
 dotenv.config();
 
 // Server Configuration
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5001';
 const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'campus_companion';
 
 // MongoDB Connection
 async function connectToMongoDB() {
     try {
-        const client = await MongoClient.connect(MONGODB_URI);
+        const client = await MongoClient.connect(MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            ssl: true,
+            tlsAllowInvalidCertificates: true
+        });
         return client.db(DB_NAME);
     } catch (error) {
         console.error('MongoDB connection error:', error);
@@ -75,6 +80,7 @@ You're like a supportive senior student who genuinely cares about their academic
 - Share relevant tips and suggestions beyond just answering questions
 - Use emojis occasionally to add personality 😊
 - Remember context from previous conversations when possible
+- **CRITICAL**: When you receive data in JSON format, NEVER show the raw JSON to users. Instead, interpret and present the information in a natural, conversational way
 
 🔹 Sample Responses:
 - "Hey! I see you have English class in 30 minutes. Since you missed Wednesday's class, you might want to quickly review the assignment on Shakespeare before heading over!"
@@ -82,15 +88,25 @@ You're like a supportive senior student who genuinely cares about their academic
 - "I noticed the library extended hours - perfect timing for your upcoming finals! Need help planning a study schedule?"
 
 Act like a **caring academic mentor and friend** who's always ready to help students succeed in their campus journey.
+
+🚨 **IMPORTANT DATA PROCESSING RULES**:
+- When you receive timetable data, present it as: "You have [Subject] with [Instructor] from [StartTime] to [EndTime] in room [Room]"
+- When you receive announcements, present them as: "Here's the latest: [Title] - [Content]"
+- When you receive lost & found data, present it naturally: "I found a [Title]: [Description]. Contact: [ContactInfo]"
+- NEVER show raw JSON, database IDs, or technical data to users
+- Always interpret and humanize the data before presenting it
 `;
 
-// API Helper Functions with Fallback
-async function getTimetable(userId) {
+// API Helper Functions with Real Backend Integration
+async function getTimetable(userId, day = null) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/timetables?userId=${userId}`);
+        let url = `${SERVER_URL}/api/chatbot/timetables?userId=${userId}`;
+        if (day) url += `&day=${day}`;
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Server error');
         const data = await response.json();
-        return data.timetables || [];
+        return data || [];
     } catch (error) {
         console.error('Server not available, using fallback data');
         return [
@@ -121,12 +137,15 @@ async function getTimetable(userId) {
     }
 }
 
-async function getAnnouncements(limit = 5) {
+async function getAnnouncements(category = null, limit = 5) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/announcements?limit=${limit}`);
+        let url = `${SERVER_URL}/api/chatbot/announcements?limit=${limit}`;
+        if (category) url += `&category=${category}`;
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Server error');
         const data = await response.json();
-        return data.announcements || [];
+        return data || [];
     } catch (error) {
         console.error('Server not available, using fallback data');
         return [
@@ -155,12 +174,19 @@ async function getAnnouncements(limit = 5) {
     }
 }
 
-async function searchLostFound(query) {
+async function searchLostFound(query, type = null, category = null) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/lostfound?search=${encodeURIComponent(query)}`);
+        let url = `${SERVER_URL}/api/chatbot/lostfound?`;
+        const params = new URLSearchParams();
+        
+        if (type) params.append('type', type);
+        if (category) params.append('category', category);
+        if (query) params.append('search', query);
+        
+        const response = await fetch(url + params.toString());
         if (!response.ok) throw new Error('Server error');
         const data = await response.json();
-        return data.items || [];
+        return data || [];
     } catch (error) {
         console.error('Server not available, using fallback data');
         return [
@@ -194,10 +220,13 @@ async function searchLostFound(query) {
 
 async function getUserProfile(userId) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/auth/profile/${userId}`);
-        if (!response.ok) throw new Error('Server error');
-        const data = await response.json();
-        return data.user || null;
+        // For demo purposes, return mock user data
+        // In production, this would require proper JWT authentication
+        return {
+            name: 'Student User',
+            email: `${userId}@campus.edu`,
+            studentId: userId.toUpperCase()
+        };
     } catch (error) {
         console.error('Server not available, using fallback data');
         return {
@@ -220,62 +249,76 @@ async function getEnhancedResponse(message, userId) {
     
     // Timetable queries with mentoring context
     if (lowerMessage.includes('timetable') || lowerMessage.includes('class') || lowerMessage.includes('schedule') || lowerMessage.includes('missed') || lowerMessage.includes('catch up')) {
-        const timetable = await getTimetable(userId);
+        // Get today's timetable if asking about "today"
+        const dayFilter = lowerMessage.includes('today') ? currentDay : null;
+        const timetable = await getTimetable(userId, dayFilter);
+        
         if (timetable.length > 0) {
-            contextData += `\nUser's Timetable Data: ${JSON.stringify(timetable)}`;
-            
-            // Add class content data
-            const classContents = [
-                {
-                    subject: 'Computer Science',
-                    topic: 'Introduction to Algorithms',
-                    content: 'Covered Big O notation, time complexity analysis, and basic sorting algorithms like bubble sort and selection sort. Homework: Practice problems 1-5 from Chapter 2.'
-                },
-                {
-                    subject: 'Software Engineering', 
-                    topic: 'SDLC Models and Agile Methodology',
-                    content: 'Discussed Waterfall vs Agile development, Scrum framework, sprint planning, and user stories. Covered SOLID principles and design patterns. Next class: Requirements gathering techniques.'
-                },
-                {
-                    subject: 'Database Systems',
-                    topic: 'SQL Joins and Subqueries',
-                    content: 'Practiced INNER JOIN, LEFT JOIN, RIGHT JOIN operations. Covered correlated and non-correlated subqueries. Assignment: Complete database design project Phase 1.'
-                },
-                {
-                    subject: 'Data Structures',
-                    topic: 'Linked Lists and Stack Implementation',
-                    content: 'Implemented singly and doubly linked lists in C++. Covered stack operations (push, pop, peek) and applications. Lab exercise: Build a calculator using stacks.'
-                },
-                {
-                    subject: 'Physics',
-                    topic: 'Electromagnetic Waves and Optics', 
-                    content: 'Studied wave properties, reflection, refraction, and interference patterns. Solved problems on lens equations and mirror formulas. Quiz next week on Chapter 12.'
-                }
-            ];
-            contextData += `\nClass Content Data: ${JSON.stringify(classContents)}`;
-            contextData += `\nMentoring Context: Use the specific class content when available. If specific content isn't available for a subject, use your academic knowledge to provide helpful information about typical topics covered in that course at this level. Always be helpful and educational rather than saying you don't have information.`;
+            contextData += `\nTimetable Information Available: You have ${timetable.length} classes. Process this data and present it naturally to the user:`;
+            timetable.forEach(cls => {
+                contextData += `\n- ${cls.subject} with ${cls.instructor} from ${cls.startTime} to ${cls.endTime} in room ${cls.room} (${cls.day})`;
+            });
+            contextData += `\nDay Filter: ${dayFilter || 'All days'}`;
         }
+        
+        // Add class content data for academic mentoring
+        const classContents = [
+            { subject: 'Computer Science', topic: 'Introduction to Algorithms', content: 'Covered Big O notation, time complexity analysis, and basic sorting algorithms like bubble sort and selection sort. Homework: Practice problems 1-5 from Chapter 2.' },
+            { subject: 'Software Engineering', topic: 'SDLC Models and Agile Methodology', content: 'Discussed Waterfall vs Agile development, Scrum framework, sprint planning, and user stories. Covered SOLID principles and design patterns. Next class: Requirements gathering techniques.' },
+            { subject: 'Database Systems', topic: 'SQL Joins and Subqueries', content: 'Practiced INNER JOIN, LEFT JOIN, RIGHT JOIN operations. Covered correlated and non-correlated subqueries. Assignment: Complete database design project Phase 1.' },
+            { subject: 'Data Structures', topic: 'Linked Lists and Stack Implementation', content: 'Implemented singly and doubly linked lists in C++. Covered stack operations (push, pop, peek) and applications. Lab exercise: Build a calculator using stacks.' },
+            { subject: 'Physics', topic: 'Electromagnetic Waves and Optics', content: 'Studied wave properties, reflection, refraction, and interference patterns. Solved problems on lens equations and mirror formulas. Quiz next week on Chapter 12.' }
+        ];
+        contextData += `\nClass Content Data: ${JSON.stringify(classContents)}`;
+        contextData += `\nMentoring Context: Use real-time timetable data combined with class content. Provide specific information about current/upcoming classes and help with missed class catch-up using both real data and academic knowledge.`;
     }
     
     // Announcement queries with engagement
     if (lowerMessage.includes('announcement') || lowerMessage.includes('notice') || lowerMessage.includes('news') || lowerMessage.includes('update')) {
-        const announcements = await getAnnouncements();
+        // Check for category-specific requests
+        let category = null;
+        if (lowerMessage.includes('academic')) category = 'academic';
+        else if (lowerMessage.includes('event')) category = 'event';
+        else if (lowerMessage.includes('general')) category = 'general';
+        
+        const announcements = await getAnnouncements(category, 5);
         if (announcements.length > 0) {
-            contextData += `\nLatest Announcements: ${JSON.stringify(announcements)}`;
-            contextData += `\nEngagement Context: Connect announcements to student life, show enthusiasm, and suggest how they can benefit from these updates.`;
+            contextData += `\nAnnouncement Information Available: Present these naturally to the user:`;
+            announcements.forEach(ann => {
+                contextData += `\n- ${ann.title}: ${ann.content} (${ann.category} priority: ${ann.priority})`;
+            });
+            contextData += `\nCategory Filter: ${category || 'All categories'}`;
+            contextData += `\nEngagement Context: Present announcements enthusiastically and connect them to student needs.`;
         }
     }
     
     // Lost & Found queries with empathy
     if (lowerMessage.includes('lost') || lowerMessage.includes('found') || lowerMessage.includes('missing')) {
-        const searchTerms = message.split(' ').filter(word => word.length > 3);
-        if (searchTerms.length > 0) {
-            const lostFoundItems = await searchLostFound(searchTerms[0]);
-            if (lostFoundItems.length > 0) {
-                contextData += `\nLost & Found Items: ${JSON.stringify(lostFoundItems)}`;
-            }
+        // Determine search parameters
+        let type = null, category = null, searchQuery = null;
+        
+        if (lowerMessage.includes('lost')) type = 'lost';
+        else if (lowerMessage.includes('found')) type = 'found';
+        
+        if (lowerMessage.includes('id') || lowerMessage.includes('card')) category = 'documents';
+        else if (lowerMessage.includes('phone') || lowerMessage.includes('calculator')) category = 'electronics';
+        else if (lowerMessage.includes('wallet') || lowerMessage.includes('bag')) category = 'personal';
+        
+        // Extract search terms
+        const searchTerms = message.split(' ').filter(word => 
+            word.length > 3 && !['lost', 'found', 'missing', 'have', 'been', 'item'].includes(word.toLowerCase())
+        );
+        if (searchTerms.length > 0) searchQuery = searchTerms[0];
+        
+        const lostFoundItems = await searchLostFound(searchQuery, type, category);
+        if (lostFoundItems.length > 0) {
+            contextData += `\nLost & Found Items Available: Present these naturally to help the user:`;
+            lostFoundItems.forEach(item => {
+                contextData += `\n- ${item.title}: ${item.description} (${item.type}) - Contact: ${item.contactInfo || 'See campus security'}`;
+            });
+            contextData += `\nSearch Parameters: type=${type}, category=${category}, query=${searchQuery}`;
         }
-        contextData += `\nEmpathy Context: Be understanding about lost items, offer practical help, and provide emotional support. Suggest next steps and alternatives.`;
+        contextData += `\nEmpathy Context: Use real lost & found data to help students. Be understanding, offer practical help, and provide emotional support with specific item information.`;
     }
     
     // Profile queries with personal touch
@@ -310,45 +353,23 @@ async function getEnhancedResponse(message, userId) {
     return contextData;
 }
 
-// Load Conversation History from MongoDB
-async function loadConversationHistory(userId) {
-    try {
-        const db = await connectToMongoDB();
-        if (db) {
-            const collection = db.collection('conversations');
-            const userChat = await collection.findOne({ userId });
-            if (userChat && userChat.history) {
-                return userChat.history;
-            }
-        }
-        return [{
-            role: 'user',
-            parts: [{ text: campusCompanionPrompt }]
-        }];
-    } catch (error) {
-        console.error('Error loading conversation history:', error);
-        return [{
-            role: 'user',
-            parts: [{ text: campusCompanionPrompt }]
-        }];
+// In-memory conversation storage (fallback)
+const conversations = new Map();
+
+// Load Conversation History
+function loadConversationHistory(userId) {
+    if (conversations.has(userId)) {
+        return conversations.get(userId);
     }
+    return [{
+        role: 'user',
+        parts: [{ text: campusCompanionPrompt }]
+    }];
 }
 
-// Save Conversation History to MongoDB
-async function saveConversationHistory(userId, history) {
-    try {
-        const db = await connectToMongoDB();
-        if (db) {
-            const collection = db.collection('conversations');
-            await collection.updateOne(
-                { userId },
-                { $set: { userId, history, updatedAt: new Date() } },
-                { upsert: true }
-            );
-        }
-    } catch (error) {
-        console.error('Error saving conversation history:', error);
-    }
+// Save Conversation History
+function saveConversationHistory(userId, history) {
+    conversations.set(userId, history);
 }
 
 // Initialize Express app
@@ -357,10 +378,11 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware setup
 app.use(cors({
-    origin: '*',
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['*'],
-    credentials: false
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 app.use(express.json());
 
@@ -399,7 +421,7 @@ app.post('/chat', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'Missing userId or message/image' });
         }
 
-        let history = await loadConversationHistory(userId);
+        let history = loadConversationHistory(userId);
 
         // Ensure system prompt is included
         if (history.length === 0) {
@@ -442,7 +464,7 @@ app.post('/chat', upload.single('image'), async (req, res) => {
             { role: 'model', parts: [{ text: response }] }
         );
 
-        await saveConversationHistory(userId, history);
+        saveConversationHistory(userId, history);
         res.json({ response });
     } catch (error) {
         console.error('Detailed error:', error);
