@@ -15,7 +15,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Add timetable entry
+// Add timetable entry    
 router.post('/', auth, timetableValidation, async (req, res) => {
   try {
     const { subject, instructor, room, day, startTime, endTime, semester } = req.body;

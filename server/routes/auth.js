@@ -25,7 +25,8 @@ router.post('/register', registerValidation, async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        studentId: user.studentId
+        studentId: user.studentId,
+        role: user.role
       }
     });
   } catch (error) {
@@ -56,7 +57,8 @@ router.post('/login', loginValidation, async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        studentId: user.studentId
+        studentId: user.studentId,
+        role: user.role
       }
     });
   } catch (error) {
