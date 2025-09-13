@@ -1,30 +1,145 @@
 import { useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Avatar, Button, TextField, Grid,
-  Chip, Divider, IconButton, Dialog, DialogTitle, DialogContent, DialogActions
+  Box, Paper, Avatar, Typography, Grid, TextField, Button, Divider,
+  Card, CardContent, Chip, IconButton, Dialog, DialogTitle, DialogContent,
+  DialogActions, Alert, Snackbar, CircularProgress
 } from '@mui/material';
 import {
-  Edit, School, Email, Badge, Phone, LocationOn, CalendarToday, Save, Cancel
+  Person, Email, School, Edit, Save, Cancel, AccountCircle,
+  CalendarToday, Badge, Security, PhotoCamera, Delete, Phone, LocationOn
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 function Profile() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({
+  const [editData, setEditData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '+1 (555) 123-4567',
-    department: 'Computer Science',
-    year: '3rd Year',
-    address: '123 Campus Drive, University City'
+    studentId: user?.studentId || '',
+    phone: user?.phone || '',
+    department: user?.department || '',
+    year: user?.year || '',
+    address: user?.address || ''
   });
+  const [passwordDialog, setPasswordDialog] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [imageUploading, setImageUploading] = useState(false);
 
-  const handleSave = () => {
-    // Save logic here
-    setEditing(false);
+  // ---------------- Edit / Save ----------------
+  const handleEdit = () => setEditing(true);
+  const handleCancel = () => setEditing(false);
+
+  const handleSave = async () => {
+    try {
+      const response = await api.put('/auth/profile', editData);
+      const updatedUser = response.data.user;
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      setEditing(false);
+      setSnackbar({ open: true, message: 'Profile updated successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Failed to update profile',
+        severity: 'error'
+      });
+    }
   };
 
+  // ---------------- Password Change ----------------
+  const handlePasswordChange = async () => {
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setSnackbar({ open: true, message: 'Passwords do not match', severity: 'error' });
+      return;
+    }
+    try {
+      await api.put('/auth/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      setPasswordDialog(false);
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setSnackbar({ open: true, message: 'Password changed successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Failed to change password',
+        severity: 'error'
+      });
+    }
+  };
+
+  // ---------------- Image Upload ----------------
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setSnackbar({ open: true, message: 'Image size should be less than 5MB', severity: 'error' });
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await api.post('/upload/profile-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const updatedUser = response.data.user;
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      setSnackbar({ open: true, message: 'Profile image updated successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Failed to update profile image',
+        severity: 'error'
+      });
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleImageRemove = async () => {
+    try {
+      const response = await api.put('/auth/profile', { ...editData, profileImage: null });
+      const updatedUser = response.data.user;
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+
+      setSnackbar({ open: true, message: 'Profile image removed successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.message || 'Failed to remove profile image',
+        severity: 'error'
+      });
+    }
+  };
+
+  const formatDate = (dateString) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+  // Dummy stats
   const stats = [
     { label: 'Classes Enrolled', value: '6', color: '#568F87' },
     { label: 'Assignments Due', value: '3', color: '#F5BABB' },
@@ -33,246 +148,180 @@ function Profile() {
   ];
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-          My Profile
-        </Typography>
-        <Button
-          variant={editing ? "outlined" : "contained"}
-          startIcon={editing ? <Cancel /> : <Edit />}
-          onClick={() => setEditing(!editing)}
-          sx={{
-            borderRadius: 2,
-            background: editing ? 'transparent' : 'linear-gradient(45deg, #568F87, #064232)'
-          }}
-        >
-          {editing ? 'Cancel' : 'Edit Profile'}
-        </Button>
-      </Box>
-
-      <Grid container spacing={3}>
-        {/* Profile Card */}
-        <Grid size={{ xs: 12, sm: 12, md: 4 }}>
-          <Card sx={{ textAlign: 'center', p: { xs: 2, sm: 2.5, md: 3 } }}>
-            <Avatar
-              sx={{
-                width: { xs: 80, sm: 100 },
-                height: { xs: 80, sm: 100 },
-                mx: 'auto',
-                mb: 2,
-                background: 'linear-gradient(45deg, #568F87, #064232)',
-                fontSize: { xs: '2rem', sm: '2.5rem' }
-              }}
-            >
-              {user?.name?.charAt(0)}
-            </Avatar>
-            <Typography variant="h6" sx={{ 
-              fontWeight: 600, 
-              mb: 1,
-              fontSize: { xs: '1.1rem', sm: '1.25rem' }
-            }}>
-              {formData.name}
-            </Typography>
-            <Chip
-              label={user?.studentId}
-              sx={{
-                bgcolor: '#568F8720',
-                color: '#568F87',
-                fontWeight: 600,
-                mb: 2
-              }}
-            />
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              {formData.department}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {formData.year}
-            </Typography>
-          </Card>
-        </Grid>
-
-        {/* Details Card */}
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
-            <Typography variant="h6" sx={{ 
-              fontWeight: 600, 
-              mb: { xs: 2, sm: 3 },
-              fontSize: { xs: '1.1rem', sm: '1.25rem' }
-            }}>
-              Personal Information
-            </Typography>
-            
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <School color="primary" />
-                  <Box flex={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      Full Name
-                    </Typography>
-                    {editing ? (
-                      <TextField
-                        size="small"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        fullWidth
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {formData.name}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Email color="primary" />
-                  <Box flex={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      Email Address
-                    </Typography>
-                    {editing ? (
-                      <TextField
-                        size="small"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        fullWidth
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {formData.email}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Phone color="primary" />
-                  <Box flex={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      Phone Number
-                    </Typography>
-                    {editing ? (
-                      <TextField
-                        size="small"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        fullWidth
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {formData.phone}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box display="flex" alignItems="center" gap={2} mb={2}>
-                  <Badge color="primary" />
-                  <Box flex={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      Department
-                    </Typography>
-                    {editing ? (
-                      <TextField
-                        size="small"
-                        value={formData.department}
-                        onChange={(e) => setFormData({...formData, department: e.target.value})}
-                        fullWidth
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {formData.department}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12 }}>
-                <Box display="flex" alignItems="center" gap={2}>
-                  <LocationOn color="primary" />
-                  <Box flex={1}>
-                    <Typography variant="body2" color="text.secondary">
-                      Address
-                    </Typography>
-                    {editing ? (
-                      <TextField
-                        size="small"
-                        value={formData.address}
-                        onChange={(e) => setFormData({...formData, address: e.target.value})}
-                        fullWidth
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                        {formData.address}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </Grid>
-            </Grid>
-
-            {editing && (
-              <Box display="flex" justifyContent="flex-end" gap={2} mt={3}>
-                <Button
-                  variant="outlined"
-                  onClick={() => setEditing(false)}
-                  sx={{ borderRadius: 2 }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<Save />}
-                  onClick={handleSave}
-                  sx={{
-                    borderRadius: 2,
-                    background: 'linear-gradient(45deg, #568F87, #064232)'
-                  }}
-                >
-                  Save Changes
-                </Button>
+    <Box sx={{ maxWidth: 1000, mx: 'auto', p: 2 }}>
+      {/* Profile Header */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          mb: 3,
+          borderRadius: 3,
+          background: 'linear-gradient(135deg, #568F87 0%, #064232 100%)',
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <Grid container spacing={3} alignItems="center">
+          <Grid item>
+            <Box sx={{ position: 'relative' }}>
+              <Avatar
+                src={user?.profileImage}
+                sx={{
+                  width: 120,
+                  height: 120,
+                  fontSize: '2.5rem',
+                  border: '4px solid rgba(255,255,255,0.2)',
+                  background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                }}
+              >
+                {!user?.profileImage && <Person sx={{ fontSize: '3.5rem' }} />}
+              </Avatar>
+              <Box sx={{ position: 'absolute', bottom: -8, right: -8, display: 'flex', gap: 1 }}>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="profile-image-upload"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <label htmlFor="profile-image-upload">
+                  <IconButton component="span" size="small" disabled={imageUploading}>
+                    {imageUploading ? <CircularProgress size={16} /> : <PhotoCamera fontSize="small" />}
+                  </IconButton>
+                </label>
+                {user?.profileImage && (
+                  <IconButton size="small" onClick={handleImageRemove}>
+                    <Delete fontSize="small" />
+                  </IconButton>
+                )}
               </Box>
-            )}
-          </Card>
-        </Grid>
-
-        {/* Stats Cards */}
-        <Grid size={12}>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-            Activity Overview
-          </Typography>
-          <Grid container spacing={2}>
-            {stats.map((stat, index) => (
-              <Grid size={{ xs: 6, sm: 3 }} key={index}>
-                <Card sx={{ textAlign: 'center', p: 2 }}>
-                  <Typography
-                    variant="h4"
-                    sx={{
-                      fontWeight: 700,
-                      color: stat.color,
-                      mb: 1
-                    }}
-                  >
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                </Card>
-              </Grid>
-            ))}
+            </Box>
+          </Grid>
+          <Grid item xs>
+            <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
+              {user?.name}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Chip icon={<Badge />} label={user?.studentId} />
+              <Chip icon={<School />} label={user?.role === 'admin' ? 'Administrator' : 'Student'} />
+            </Box>
+          </Grid>
+          <Grid item>
+            <IconButton onClick={handleEdit} color="inherit">
+              <Edit />
+            </IconButton>
           </Grid>
         </Grid>
+      </Paper>
+
+      <Grid container spacing={3}>
+        {/* Personal Info */}
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Personal Information
+              </Typography>
+              <Grid container spacing={3}>
+                {['name', 'email', 'studentId'].map((field) => (
+                  <Grid item xs={12} sm={field === 'address' ? 12 : 6} key={field}>
+                    <TextField
+                      fullWidth
+                      label={field.charAt(0).toUpperCase() + field.slice(1)}
+                      value={editing ? editData[field] : user?.[field]}
+                      onChange={(e) => setEditData({ ...editData, [field]: e.target.value })}
+                      disabled={!editing}
+                      variant={editing ? 'outlined' : 'filled'}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+
+              {editing && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+                  <Button variant="outlined" startIcon={<Cancel />} onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                  <Button variant="contained" startIcon={<Save />} onClick={handleSave}>
+                    Save Changes
+                  </Button>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Account Details */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+                Account Details
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Member Since
+              </Typography>
+              <Typography>{user?.createdAt ? formatDate(user.createdAt) : 'N/A'}</Typography>
+              <Divider sx={{ my: 2 }} />
+              <Button fullWidth variant="outlined" startIcon={<Security />} onClick={() => setPasswordDialog(true)}>
+                Change Password
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Stats */}
+        
       </Grid>
+
+      {/* Password Dialog */}
+      <Dialog open={passwordDialog} onClose={() => setPasswordDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Change Password</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            type="password"
+            label="Current Password"
+            value={passwordData.currentPassword}
+            onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+            sx={{ my: 1 }}
+          />
+          <TextField
+            fullWidth
+            type="password"
+            label="New Password"
+            value={passwordData.newPassword}
+            onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+            sx={{ my: 1 }}
+          />
+          <TextField
+            fullWidth
+            type="password"
+            label="Confirm New Password"
+            value={passwordData.confirmPassword}
+            onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+            sx={{ my: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPasswordDialog(false)}>Cancel</Button>
+          <Button onClick={handlePasswordChange} variant="contained">
+            Change Password
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

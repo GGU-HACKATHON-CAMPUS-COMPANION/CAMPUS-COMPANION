@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-  AppBar, Toolbar, Typography, Container, Tabs, Tab, Box, Button, IconButton,
-  Avatar, Chip, Fade, Slide, Paper, Menu, MenuItem, Divider, ListItemIcon
+  AppBar, Toolbar, Typography, Container, Tabs, Tab, Box, Button, Avatar,
+  Fade, Paper, Menu, MenuItem, Divider, ListItemIcon
 } from '@mui/material';
 import {
-  Logout, Campaign, Schedule, FindInPage, School, Person, Settings as SettingsIcon, 
-  AccountCircle, ExpandMore, CalendarToday
+  Logout, Campaign, Schedule, FindInPage, School, Person, 
+  AccountCircle, ExpandMore, CalendarToday, Settings as SettingsIcon
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import Announcements from './Announcements';
@@ -34,14 +34,19 @@ function Dashboard() {
   const [anchorEl, setAnchorEl] = useState(null);
   const { user, logout } = useAuth();
   
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleProfileClick = () => {
+    setTab(4);
+    handleMenuClose();
   };
-  
-  const handleMenuClose = () => {
-    setAnchorEl(null);
+
+  const handleSettingsClick = () => {
+    setTab(5);
+    handleMenuClose();
   };
-  
+
   const handleLogout = () => {
     handleMenuClose();
     logout();
@@ -49,6 +54,7 @@ function Dashboard() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFA' }}>
+      {/* Top App Bar */}
       <AppBar 
         position="static" 
         elevation={0}
@@ -57,7 +63,8 @@ function Dashboard() {
           borderBottom: '1px solid rgba(255,255,255,0.1)'
         }}
       >
-        <Toolbar sx={{ py: 1 }}>
+        <Toolbar sx={{ py: 1, px: { xs: 1, sm: 2 } }}>
+          {/* Logo + Title */}
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <Avatar sx={{ 
               mr: 2, 
@@ -65,7 +72,7 @@ function Dashboard() {
             }}>
               <School />
             </Avatar>
-            <Box>
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Campus Companion
               </Typography>
@@ -73,9 +80,15 @@ function Dashboard() {
                 Welcome back, {user?.name}
               </Typography>
             </Box>
+            <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Campus
+              </Typography>
+            </Box>
           </Box>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Notification + Profile Menu */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
             <NotificationCenter />
             <Button
               color="inherit"
@@ -86,8 +99,16 @@ function Dashboard() {
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
               }}
             >
-              <Avatar sx={{ mr: 1, width: 32, height: 32 }}>
-                <Person />
+              <Avatar 
+                src={user?.profileImage}
+                sx={{ 
+                  mr: 1, 
+                  width: 32, 
+                  height: 32,
+                  background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                }}
+              >
+                {!user?.profileImage && <Person />}
               </Avatar>
               <Box sx={{ textAlign: 'left' }}>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -99,6 +120,7 @@ function Dashboard() {
               </Box>
             </Button>
             
+            {/* Profile Dropdown Menu */}
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
@@ -112,13 +134,22 @@ function Dashboard() {
                 }
               }}
             >
-              <MenuItem onClick={() => { handleMenuClose(); setTab(4); }}>
+              <MenuItem onClick={handleProfileClick}>
                 <ListItemIcon>
-                  <AccountCircle />
+                  <Avatar 
+                    src={user?.profileImage}
+                    sx={{ 
+                      width: 24, 
+                      height: 24,
+                      background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                    }}
+                  >
+                    {!user?.profileImage && <AccountCircle sx={{ fontSize: 16 }} />}
+                  </Avatar>
                 </ListItemIcon>
                 Profile
               </MenuItem>
-              <MenuItem onClick={() => { handleMenuClose(); setTab(5); }}>
+              <MenuItem onClick={handleSettingsClick}>
                 <ListItemIcon>
                   <SettingsIcon />
                 </ListItemIcon>
@@ -136,6 +167,7 @@ function Dashboard() {
         </Toolbar>
       </AppBar>
 
+      {/* Tabs + Panels */}
       <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2, md: 3 }, px: { xs: 1, sm: 2 } }}>
         <Paper 
           elevation={0} 
@@ -148,7 +180,9 @@ function Dashboard() {
           <Tabs 
             value={tab} 
             onChange={(e, newValue) => setTab(newValue)} 
-            centered
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             sx={{
               bgcolor: '#FFFFFF',
               '& .MuiTabs-indicator': {
@@ -164,56 +198,43 @@ function Dashboard() {
                 '&.Mui-selected': {
                   color: '#568F87'
                 }
+              },
+              '& .MuiTabs-scrollButtons': {
+                '&.Mui-disabled': {
+                  opacity: 0.3
+                }
               }
             }}
           >
+            <Tab icon={<Campaign />} label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Announcements</Box>} iconPosition="start" />
+            <Tab icon={<Schedule />} label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Timetable</Box>} iconPosition="start" />
+            <Tab icon={<FindInPage />} label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Lost & Found</Box>} iconPosition="start" />
+            <Tab icon={<CalendarToday />} label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>My Schedule</Box>} iconPosition="start" />
             <Tab 
-              icon={<Campaign />} 
-              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Announcements</Box>}
+              icon={
+                <Avatar 
+                  src={user?.profileImage}
+                  sx={{ width: 20, height: 20, background: user?.profileImage ? 'transparent' : 'currentColor' }}
+                >
+                  {!user?.profileImage && <Person sx={{ fontSize: 14 }} />}
+                </Avatar>
+              } 
+              label="Profile" 
               iconPosition="start"
-              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
             />
-            <Tab 
-              icon={<Schedule />} 
-              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Timetable</Box>}
-              iconPosition="start"
-              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
-            />
-            <Tab 
-              icon={<FindInPage />} 
-              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Lost & Found</Box>}
-              iconPosition="start"
-              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
-            />
-            <Tab 
-              icon={<CalendarToday />} 
-              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>My Schedule</Box>}
-              iconPosition="start"
-              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
-            />
+            <Tab icon={<SettingsIcon />} label="Settings" iconPosition="start" />
           </Tabs>
 
-          <TabPanel value={tab} index={0}>
-            <Announcements />
-          </TabPanel>
-          <TabPanel value={tab} index={1}>
-            <Timetable />
-          </TabPanel>
-          <TabPanel value={tab} index={2}>
-            <LostFound />
-          </TabPanel>
-          <TabPanel value={tab} index={3}>
-            <PersonalTimetable />
-          </TabPanel>
-          <TabPanel value={tab} index={4}>
-            <Profile />
-          </TabPanel>
-          <TabPanel value={tab} index={5}>
-            <Settings />
-          </TabPanel>
+          <TabPanel value={tab} index={0}><Announcements /></TabPanel>
+          <TabPanel value={tab} index={1}><Timetable /></TabPanel>
+          <TabPanel value={tab} index={2}><LostFound /></TabPanel>
+          <TabPanel value={tab} index={3}><PersonalTimetable /></TabPanel>
+          <TabPanel value={tab} index={4}><Profile /></TabPanel>
+          <TabPanel value={tab} index={5}><Settings /></TabPanel>
         </Paper>
       </Container>
       
+      {/* Chatbot at bottom */}
       <Chatbot />
     </Box>
   );
