@@ -2,18 +2,24 @@ import { useState, useEffect } from 'react';
 import {
   Card, CardContent, Typography, Grid, Chip, Box, CircularProgress, Button,
   Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl,
-  InputLabel, Select, MenuItem, IconButton, Avatar, Fade, Skeleton
+  InputLabel, Select, MenuItem, IconButton, Avatar, Fade, Skeleton, InputAdornment,
+  ToggleButton, ToggleButtonGroup, Tooltip, Paper
 } from '@mui/material';
 import {
-  Add, Delete, Campaign, Event, School, Warning, Info, AccessTime
+  Add, Delete, Campaign, Event, School, Warning, Info, AccessTime, Search,
+  FilterList, Clear
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
+  const [filteredAnnouncements, setFilteredAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
   const [formData, setFormData] = useState({
     title: '', content: '', category: 'general', priority: 'medium'
   });
@@ -22,16 +28,44 @@ function Announcements() {
   useEffect(() => {
     fetchAnnouncements();
   }, []);
+  
+  useEffect(() => {
+    let filtered = announcements;
+    
+    if (searchTerm) {
+      filtered = filtered.filter(announcement => 
+        announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        announcement.content.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    if (categoryFilter !== 'all') {
+      filtered = filtered.filter(announcement => announcement.category === categoryFilter);
+    }
+    
+    if (priorityFilter !== 'all') {
+      filtered = filtered.filter(announcement => announcement.priority === priorityFilter);
+    }
+    
+    setFilteredAnnouncements(filtered);
+  }, [announcements, searchTerm, categoryFilter, priorityFilter]);
 
   const fetchAnnouncements = async () => {
     try {
       const response = await api.get('/announcements');
       setAnnouncements(response.data);
+      setFilteredAnnouncements(response.data);
     } catch (error) {
       console.error('Error fetching announcements:', error);
     } finally {
       setLoading(false);
     }
+  };
+  
+  const clearFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('all');
+    setPriorityFilter('all');
   };
 
   const handleSubmit = async (e) => {
@@ -68,10 +102,10 @@ function Announcements() {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'academic': return '#2563eb';
-      case 'event': return '#f59e0b';
-      case 'urgent': return '#dc2626';
-      default: return '#6b7280';
+      case 'academic': return '#568F87';
+      case 'event': return '#F5BABB';
+      case 'urgent': return '#E8989A';
+      default: return '#064232';
     }
   };
 
@@ -96,36 +130,103 @@ function Announcements() {
 
   return (
     <>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            Campus Announcements
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Stay updated with the latest campus news and events
-          </Typography>
+      <Box mb={4}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Campus Announcements
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Stay updated with the latest campus news and events
+            </Typography>
+          </Box>
+          {user?.role === 'admin' && (
+            <Button 
+              variant="contained" 
+              startIcon={<Add />} 
+              onClick={() => setOpen(true)}
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                background: 'linear-gradient(45deg, #568F87, #064232)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #064232, #568F87)',
+                }
+              }}
+            >
+              Add Announcement
+            </Button>
+          )}
         </Box>
-        {user?.role === 'admin' && (
-          <Button 
-            variant="contained" 
-            startIcon={<Add />} 
-            onClick={() => setOpen(true)}
-            sx={{
-              borderRadius: 2,
-              px: 3,
-              background: 'linear-gradient(45deg, #2563eb, #1d4ed8)',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #1d4ed8, #1e40af)',
-              }
-            }}
-          >
-            Add Announcement
-          </Button>
-        )}
+        
+        {/* Search and Filters */}
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                fullWidth
+                placeholder="Search announcements..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  <MenuItem value="all">All Categories</MenuItem>
+                  <MenuItem value="academic">Academic</MenuItem>
+                  <MenuItem value="event">Event</MenuItem>
+                  <MenuItem value="general">General</MenuItem>
+                  <MenuItem value="urgent">Urgent</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <FormControl fullWidth>
+                <InputLabel>Priority</InputLabel>
+                <Select
+                  value={priorityFilter}
+                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  sx={{ borderRadius: 2 }}
+                >
+                  <MenuItem value="all">All Priorities</MenuItem>
+                  <MenuItem value="low">Low</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Tooltip title="Clear all filters">
+                <Button
+                  variant="outlined"
+                  onClick={clearFilters}
+                  startIcon={<Clear />}
+                  sx={{ borderRadius: 2, height: 56 }}
+                >
+                  Clear
+                </Button>
+              </Tooltip>
+            </Grid>
+          </Grid>
+        </Paper>
       </Box>
 
       <Grid container spacing={3}>
-        {announcements.map((announcement, index) => (
+        {filteredAnnouncements.map((announcement, index) => (
           <Grid size={{ xs: 12, md: 6 }} key={announcement._id}>
             <Fade in={true} timeout={300 + index * 100}>
               <Card 
@@ -221,7 +322,25 @@ function Announcements() {
         ))}
       </Grid>
       
-      {announcements.length === 0 && (
+      {filteredAnnouncements.length === 0 && !loading && (
+        <Box 
+          display="flex" 
+          flexDirection="column" 
+          alignItems="center" 
+          justifyContent="center" 
+          py={8}
+        >
+          <Campaign sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            {announcements.length === 0 ? 'No announcements yet' : 'No announcements match your filters'}
+          </Typography>
+          <Typography variant="body2" color="text.disabled">
+            {announcements.length === 0 ? 'Check back later for campus updates and news' : 'Try adjusting your search or filter criteria'}
+          </Typography>
+        </Box>
+      )}
+      
+      {announcements.length === 0 && loading && (
         <Box 
           display="flex" 
           flexDirection="column" 
@@ -250,7 +369,7 @@ function Announcements() {
       >
         <DialogTitle sx={{ 
           pb: 1,
-          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+          background: 'linear-gradient(135deg, #568F87 0%, #064232 100%)',
           color: 'white',
           display: 'flex',
           alignItems: 'center',
@@ -327,7 +446,7 @@ function Announcements() {
             sx={{ 
               borderRadius: 2,
               px: 3,
-              background: 'linear-gradient(45deg, #2563eb, #1d4ed8)'
+              background: 'linear-gradient(45deg, #568F87, #064232)'
             }}
           >
             Publish

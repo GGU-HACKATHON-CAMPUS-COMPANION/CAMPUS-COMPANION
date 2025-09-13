@@ -46,7 +46,7 @@ function Login() {
   return (
     <Box sx={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #568F87 0%, #064232 100%)',
       display: 'flex',
       alignItems: 'center',
       py: 4
@@ -56,8 +56,9 @@ function Login() {
           <Paper elevation={24} sx={{ 
             p: 4, 
             borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)'
+            background: '#F8FAFA',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid #F5BABB'
           }}>
             <Box sx={{ textAlign: 'center', mb: 3 }}>
               <Avatar sx={{ 
@@ -65,13 +66,13 @@ function Login() {
                 height: 80, 
                 mx: 'auto', 
                 mb: 2,
-                background: 'linear-gradient(45deg, #2563eb, #f59e0b)'
+                background: 'linear-gradient(45deg, #568F87, #064232)'
               }}>
                 <School sx={{ fontSize: 40 }} />
               </Avatar>
               <Typography variant="h4" sx={{ 
                 fontWeight: 700,
-                background: 'linear-gradient(45deg, #2563eb, #f59e0b)',
+                background: 'linear-gradient(45deg, #568F87, #064232)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
@@ -88,7 +89,7 @@ function Login() {
               centered
               sx={{
                 '& .MuiTabs-indicator': {
-                  background: 'linear-gradient(45deg, #2563eb, #f59e0b)',
+                  background: 'linear-gradient(45deg, #568F87, #F5BABB)',
                   height: 3,
                   borderRadius: 2
                 }
@@ -205,9 +206,9 @@ function Login() {
                   mt: 4, 
                   py: 1.5,
                   borderRadius: 2,
-                  background: 'linear-gradient(45deg, #2563eb, #1d4ed8)',
+                  background: 'linear-gradient(45deg, #568F87, #064232)',
                   '&:hover': {
-                    background: 'linear-gradient(45deg, #1d4ed8, #1e40af)',
+                    background: 'linear-gradient(45deg, #064232, #568F87)',
                   },
                   fontWeight: 600,
                   fontSize: '1.1rem'
