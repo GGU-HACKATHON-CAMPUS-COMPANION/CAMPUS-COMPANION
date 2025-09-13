@@ -65,22 +65,6 @@ npm start
 npm start
 
 
-## Project Structure
-
-
-├── backend/
-│   ├── models/      # MongoDB models
-│   ├── routes/      # API routes
-│   ├── middleware/  # Auth middleware
-│   └── server.js    # Express server
-├── frontend/
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── pages/       # Page components
-│   │   └── services/    # API services
-│   └── public/
-
-
 ## Database Collections
 
 - **announcements** - Campus notices and updates

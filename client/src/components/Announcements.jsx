@@ -215,7 +215,7 @@ function Announcements() {
         </Box>
         
         {/* Search and Filters */}
-        <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 3 }}>
           <Grid container spacing={3} alignItems="center">
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
@@ -230,7 +230,10 @@ function Announcements() {
                     </InputAdornment>
                   ),
                 }}
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                  '& .MuiInputBase-input': { fontSize: { xs: '0.875rem', sm: '1rem' } }
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
@@ -270,7 +273,11 @@ function Announcements() {
                   variant="outlined"
                   onClick={clearFilters}
                   startIcon={<Clear />}
-                  sx={{ borderRadius: 2, height: 56 }}
+                  sx={{ 
+                    borderRadius: 2, 
+                    height: { xs: 48, sm: 56 },
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}
                 >
                   Clear
                 </Button>
@@ -307,14 +314,18 @@ function Announcements() {
                     <Avatar 
                       sx={{ 
                         bgcolor: getCategoryColor(announcement.category),
-                        width: 40,
-                        height: 40
+                        width: { xs: 32, sm: 40 },
+                        height: { xs: 32, sm: 40 }
                       }}
                     >
                       {getCategoryIcon(announcement.category)}
                     </Avatar>
                     <Box flex={1}>
-                      <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: 600, 
+                        mb: 0.5,
+                        fontSize: { xs: '1rem', sm: '1.25rem' }
+                      }}>
                         {announcement.title}
                       </Typography>
                       <Box display="flex" alignItems="center" gap={1} justifyContent="space-between">
@@ -444,7 +455,7 @@ function Announcements() {
           {editingId ? <Edit /> : <Campaign />}
           {editingId ? 'Edit Announcement' : 'Create New Announcement'}
         </DialogTitle>
-        <DialogContent sx={{ pt: 3 }}>
+        <DialogContent sx={{ pt: { xs: 2, sm: 3 }, px: { xs: 2, sm: 3 } }}>
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
               fullWidth 
@@ -499,7 +510,7 @@ function Announcements() {
             </Grid>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 2 }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 1, sm: 2 } }}>
           <Button 
             onClick={() => {
               setOpen(false);
