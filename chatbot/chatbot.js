@@ -9,12 +9,26 @@ import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import fetch from 'node-fetch';
+import { MongoClient } from 'mongodb';
 
 // Load environment variables
 dotenv.config();
 
 // Server Configuration
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:5000';
+const MONGODB_URI = process.env.MONGO_URI || 'mongodb://localhost:27017';
+const DB_NAME = 'campus_companion';
+
+// MongoDB Connection
+async function connectToMongoDB() {
+    try {
+        const client = await MongoClient.connect(MONGODB_URI);
+        return client.db(DB_NAME);
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        return null;
+    }
+}
 
 // Campus Companion System Prompt
 const campusCompanionPrompt = `
@@ -296,23 +310,45 @@ async function getEnhancedResponse(message, userId) {
     return contextData;
 }
 
-// Conversation History (In-memory for simplicity)
-const conversationHistory = new Map();
-
-// Load Conversation History
-function loadConversationHistory(userId) {
-    if (conversationHistory.has(userId)) {
-        return conversationHistory.get(userId);
+// Load Conversation History from MongoDB
+async function loadConversationHistory(userId) {
+    try {
+        const db = await connectToMongoDB();
+        if (db) {
+            const collection = db.collection('conversations');
+            const userChat = await collection.findOne({ userId });
+            if (userChat && userChat.history) {
+                return userChat.history;
+            }
+        }
+        return [{
+            role: 'user',
+            parts: [{ text: campusCompanionPrompt }]
+        }];
+    } catch (error) {
+        console.error('Error loading conversation history:', error);
+        return [{
+            role: 'user',
+            parts: [{ text: campusCompanionPrompt }]
+        }];
     }
-    return [{
-        role: 'user',
-        parts: [{ text: campusCompanionPrompt }]
-    }];
 }
 
-// Save Conversation History
-function saveConversationHistory(userId, history) {
-    conversationHistory.set(userId, history);
+// Save Conversation History to MongoDB
+async function saveConversationHistory(userId, history) {
+    try {
+        const db = await connectToMongoDB();
+        if (db) {
+            const collection = db.collection('conversations');
+            await collection.updateOne(
+                { userId },
+                { $set: { userId, history, updatedAt: new Date() } },
+                { upsert: true }
+            );
+        }
+    } catch (error) {
+        console.error('Error saving conversation history:', error);
+    }
 }
 
 // Initialize Express app
@@ -363,7 +399,7 @@ app.post('/chat', upload.single('image'), async (req, res) => {
             return res.status(400).json({ error: 'Missing userId or message/image' });
         }
 
-        let history = loadConversationHistory(userId);
+        let history = await loadConversationHistory(userId);
 
         // Ensure system prompt is included
         if (history.length === 0) {
@@ -406,7 +442,7 @@ app.post('/chat', upload.single('image'), async (req, res) => {
             { role: 'model', parts: [{ text: response }] }
         );
 
-        saveConversationHistory(userId, history);
+        await saveConversationHistory(userId, history);
         res.json({ response });
     } catch (error) {
         console.error('Detailed error:', error);
