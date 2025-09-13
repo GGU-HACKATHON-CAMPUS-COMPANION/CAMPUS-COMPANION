@@ -22,8 +22,6 @@ Students get a centralized hub for their daily campus needs — timetables, noti
 - *Backend:* Node.js with Express.js
 - *Database:* MongoDB with Advanced Memory Management
 - *Authentication:* JWT (JSON Web Tokens)
-- *AI Engine:* Google Gemini 2.0 Flash
-- *Chatbot:* Express.js with MongoDB Conversation Storage
 
 ## Getting Started
 
@@ -54,28 +52,13 @@ cd ../frontend
 npm install
 
 
-4. Install chatbot dependencies
+4. Configure environment variables
+   - Create .env file in backend folder
+   - Add MongoDB connection string and JWT secret
+
+5. Run the application
 bash
-cd ../chatbot
-npm install
-
-
-5. Configure environment variables
-   - Create .env file in server folder with MongoDB URI and JWT secret
-   - Create .env file in chatbot folder with Gemini API key and server URL
-
-6. Seed the database with sample data
-bash
-cd server
-node utils/seedData.js
-
-
-7. Run the application
-bash
-# Server (from server folder)
-npm start
-
-# Chatbot (from chatbot folder)
+# Backend (from backend folder)
 npm start
 
 # Frontend (from frontend folder)
@@ -85,17 +68,11 @@ npm start
 ## Project Structure
 
 
-├── server/
-│   ├── models/      # MongoDB models (User, Announcement, Timetable, LostFound, ClassContent)
+├── backend/
+│   ├── models/      # MongoDB models
 │   ├── routes/      # API routes
 │   ├── middleware/  # Auth middleware
-│   ├── utils/       # Database utilities and seed data
 │   └── server.js    # Express server
-├── chatbot/
-│   ├── public/      # Static files
-│   ├── chatbot.js   # AI chatbot with MongoDB integration
-│   ├── package.json # Chatbot dependencies
-│   └── .env         # Gemini API key and configuration
 ├── frontend/
 │   ├── src/
 │   │   ├── components/  # React components
