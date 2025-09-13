@@ -39,9 +39,10 @@ router.get('/:id/timings', async (req, res) => {
 // Add class timing
 router.post('/:id/timings', auth, async (req, res) => {
   try {
-    const { day, startTime, endTime, instructor } = req.body;
+    const { subject, day, startTime, endTime, instructor } = req.body;
     const timing = new ClassTiming({
       classId: req.params.id,
+      subject,
       day,
       startTime,
       endTime,
