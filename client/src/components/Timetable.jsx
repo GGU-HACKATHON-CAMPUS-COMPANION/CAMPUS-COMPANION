@@ -55,8 +55,8 @@ function Timetable() {
 
   const handleClassClick = (classItem) => { setSelectedClass(classItem); fetchTimings(classItem._id); };
 
-  const getTopOffset = (time) => { const [h, m] = time.split(':').map(Number); return ((h - 8) * 50 + (m / 60) * 50); };
-  const getHeight = (start, end) => { const [h1, m1] = start.split(':').map(Number); const [h2, m2] = end.split(':').map(Number); return ((h2*60+m2)-(h1*60+m1))*(50/60); };
+  const getTopOffset = (time) => { const [h, m] = time.split(':').map(Number); return ((h - 8) * 60 + (m / 60) * 60); }; // 60px per hour
+  const getHeight = (start, end) => { const [h1, m1] = start.split(':').map(Number); const [h2, m2] = end.split(':').map(Number); return ((h2*60+m2)-(h1*60+m1)); };
 
   if (loading) return <Box display="flex" justifyContent="center" mt={5}><CircularProgress /></Box>;
 
@@ -65,17 +65,17 @@ function Timetable() {
       <Box>
         <Box display="flex" flexDirection={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} mb={2} gap={1}>
           <Button startIcon={<ArrowBack />} onClick={() => setSelectedClass(null)}>Back</Button>
-          <Typography variant="h5">{selectedClass.className} - Semester {selectedClass.semester}</Typography>
+          <Typography variant="h5" mb={{ xs: 1, sm: 0 }}>{selectedClass.className} - Semester {selectedClass.semester}</Typography>
           {user?.role === 'admin' && <Button variant="contained" startIcon={<Add />} onClick={() => setOpenTiming(true)}>Add Timing</Button>}
         </Box>
 
         {/* Responsive Timetable Grid */}
         <Box sx={{ overflowX: 'auto' }}>
-          <Box display="grid" gridTemplateColumns="50px repeat(7, 1fr)" minWidth={700} border="1px solid #ccc">
+          <Box display="grid" gridTemplateColumns="60px repeat(7, 1fr)" minWidth={800} border="1px solid #ccc">
             {/* Time Column */}
             <Box borderRight="1px solid #ccc">
               {hours.map(h => (
-                <Box key={h} height={50} borderBottom="1px solid #eee" display="flex" alignItems="center" justifyContent="center" fontSize={{ xs: 10, sm: 12 }}>
+                <Box key={h} height={60} borderBottom="1px solid #eee" display="flex" alignItems="center" justifyContent="center" fontSize={{ xs: 11, sm: 13 }}>
                   {h <= 12 ? `${h} AM` : `${h-12} PM`}
                 </Box>
               ))}
@@ -83,17 +83,19 @@ function Timetable() {
 
             {/* Day Columns */}
             {days.map(day => (
-              <Box key={day} borderRight="1px solid #ccc" position="relative">
-                <Box textAlign="center" fontWeight="bold" borderBottom="1px solid #ccc" p={0.5} fontSize={{ xs: 11, sm: 13 }}>{day}</Box>
-                {hours.map((_, idx) => <Box key={idx} height={50} borderBottom="1px solid #eee" />)}
+              <Box key={day} borderRight="1px solid #ccc" position="relative" minWidth={100}>
+                <Box textAlign="center" fontWeight="bold" borderBottom="1px solid #ccc" p={1} fontSize={{ xs: 11, sm: 13 }}>{day}</Box>
+                {hours.map((_, idx) => <Box key={idx} height={60} borderBottom="1px solid #eee" />)}
 
                 {/* Timing blocks */}
                 {timings.filter(t => t.day === day).map(t => (
-                  <Box key={t._id} position="absolute" left={2} right={2} top={getTopOffset(t.startTime)} height={getHeight(t.startTime, t.endTime)}
-                    bgcolor="#6366f1" color="white" borderRadius={1} px={0.5} fontSize={{ xs: 10, sm: 12 }} overflow="hidden">
-                    <strong>{t.subject}</strong> <br /> {t.startTime}-{t.endTime} <br /> {t.instructor}
+                  <Box key={t._id} position="absolute" left={4} right={4} top={getTopOffset(t.startTime)} height={getHeight(t.startTime, t.endTime)}
+                    bgcolor="#6366f1" color="white" borderRadius={2} px={1} fontSize={{ xs: 10, sm: 12 }} overflow="hidden" display="flex" flexDirection="column" justifyContent="center">
+                    <strong>{t.subject}</strong>
+                    <span>{t.startTime} - {t.endTime}</span>
+                    <span>{t.instructor}</span>
                     {user?.role === 'admin' && (
-                      <IconButton size="small" sx={{ color: 'white', p: 0, mt: 0.5 }} onClick={() => handleDeleteTiming(t._id)}>
+                      <IconButton size="small" sx={{ color: 'white', p: 0, mt: 0.5, alignSelf: 'flex-end' }} onClick={() => handleDeleteTiming(t._id)}>
                         <Delete fontSize="small"/>
                       </IconButton>
                     )}
@@ -140,7 +142,7 @@ function Timetable() {
       <Grid container spacing={2}>
         {classes.map(classItem => (
           <Grid item xs={12} sm={6} md={4} key={classItem._id}>
-            <Card sx={{ cursor: 'pointer' }} onClick={() => handleClassClick(classItem)}>
+            <Card sx={{ cursor: 'pointer', minHeight: 100 }} onClick={() => handleClassClick(classItem)}>
               <CardContent>
                 <Typography variant="h6">{classItem.className}</Typography>
                 <Typography color="textSecondary">Semester {classItem.semester}</Typography>
