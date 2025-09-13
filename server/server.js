@@ -17,8 +17,10 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5173'],
-  credentials: true
+  origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:5500'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Rate limiting
@@ -42,6 +44,68 @@ app.use('/api/auth', authRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/timetables', timetableRoutes);
 app.use('/api/lostfound', lostFoundRoutes);
+
+// Public Chatbot Routes (No Auth Required)
+const Timetable = require('./models/Timetable');
+const Announcement = require('./models/Announcement');
+const LostFound = require('./models/LostFound');
+
+// Public timetable access for chatbot
+app.get('/api/chatbot/timetables', async (req, res) => {
+  try {
+    const { day, userId } = req.query;
+    const filter = {};
+    if (day) filter.day = day;
+    
+    const timetables = await Timetable.find(filter)
+      .sort({ day: 1, startTime: 1 })
+      .limit(50);
+    res.json(timetables);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Public announcements access for chatbot
+app.get('/api/chatbot/announcements', async (req, res) => {
+  try {
+    const { category, limit = 10 } = req.query;
+    const filter = {};
+    if (category) filter.category = category;
+    
+    const announcements = await Announcement.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit));
+    res.json(announcements);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Public lost/found access for chatbot
+app.get('/api/chatbot/lostfound', async (req, res) => {
+  try {
+    const { type, category, search } = req.query;
+    const filter = {};
+    
+    if (type) filter.type = type;
+    if (category) filter.category = category;
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const items = await LostFound.find(filter)
+      .populate('userId', 'name studentId')
+      .sort({ createdAt: -1 })
+      .limit(20);
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 app.use('/api/classes', classRoutes);
 
 // Health check endpoint

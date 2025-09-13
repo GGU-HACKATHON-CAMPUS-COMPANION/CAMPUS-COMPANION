@@ -45,8 +45,14 @@ function Timetable() {
 
   const handleAddTiming = async (e) => {
     e.preventDefault();
-    try { await api.post(`/classes/${selectedClass._id}/timings`, timingData); setOpenTiming(false); setTimingData({ subject: '', day: 'Monday', startTime: '', endTime: '', instructor: '' }); fetchTimings(selectedClass._id); } 
-    catch (err) { alert('Error adding timing'); }
+    try {
+      await api.post(`/classes/${selectedClass._id}/timings`, timingData);
+      setOpenTiming(false);
+      setTimingData({ subject: '', day: 'Monday', startTime: '', endTime: '', instructor: '' });
+      fetchTimings(selectedClass._id);
+    } catch (error) {
+      alert('Error adding timing');
+    }
   };
 
   const handleDeleteTiming = async (timingId) => {
@@ -205,7 +211,12 @@ function Timetable() {
           <DialogTitle>Add Timing for {selectedClass.className}</DialogTitle>
           <DialogContent>
             <Box component="form" onSubmit={handleAddTiming} sx={{ mt: 1 }}>
-              <TextField fullWidth margin="normal" label="Subject" required value={timingData.subject} onChange={e => setTimingData({...timingData, subject: e.target.value})} />
+              <TextField
+                fullWidth margin="normal" label="Subject Name" required
+                value={timingData.subject}
+                onChange={(e) => setTimingData({...timingData, subject: e.target.value})}
+                placeholder="e.g., Mathematics, Physics, Chemistry"
+              />
               <FormControl fullWidth margin="normal">
                 <InputLabel>Day</InputLabel>
                 <Select value={timingData.day} onChange={e => setTimingData({...timingData, day: e.target.value})}>
@@ -254,7 +265,7 @@ function Timetable() {
 
       <Grid container spacing={3}>
         {classes.map((classItem, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={classItem._id}>
+          <Grid item xs={12} sm={6} md={4} key={classItem._id}>
             <Fade in={true} timeout={300 + index * 100}>
               <Card 
                 sx={{ 
