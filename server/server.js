@@ -10,13 +10,14 @@ const authRoutes = require('./routes/auth');
 const announcementRoutes = require('./routes/announcements');
 const timetableRoutes = require('./routes/timetables');
 const lostFoundRoutes = require('./routes/lostfound');
+const classRoutes = require('./routes/classes');
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
@@ -41,6 +42,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/timetables', timetableRoutes);
 app.use('/api/lostfound', lostFoundRoutes);
+app.use('/api/classes', classRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
