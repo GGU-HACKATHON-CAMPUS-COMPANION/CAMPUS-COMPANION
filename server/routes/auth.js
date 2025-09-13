@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { registerValidation, loginValidation } = require('../utils/validation');
 const auth = require('../middleware/auth');
+const upload = require('../middleware/upload');
+const cloudinary = require('../config/cloudinary');
 const router = express.Router();
 
 // Register
@@ -28,6 +30,7 @@ router.post('/register', registerValidation, async (req, res) => {
         email: user.email,
         studentId: user.studentId,
         role: user.role,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -62,6 +65,7 @@ router.post('/login', loginValidation, async (req, res) => {
         email: user.email,
         studentId: user.studentId,
         role: user.role,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -89,9 +93,14 @@ router.put('/profile', auth, async (req, res) => {
       return res.status(400).json({ message: 'Email or Student ID already exists' });
     }
 
+    const updateData = { name, email, studentId };
+    if (req.body.profileImage !== undefined) {
+      updateData.profileImage = req.body.profileImage;
+    }
+
     const user = await User.findByIdAndUpdate(
       userId,
-      { name, email, studentId },
+      updateData,
       { new: true, runValidators: true }
     );
 
@@ -106,6 +115,7 @@ router.put('/profile', auth, async (req, res) => {
         email: user.email,
         studentId: user.studentId,
         role: user.role,
+        profileImage: user.profileImage,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -139,5 +149,7 @@ router.put('/change-password', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+
 
 module.exports = router;

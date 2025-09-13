@@ -2,11 +2,11 @@ import { useState } from 'react';
 import {
   Box, Paper, Avatar, Typography, Grid, TextField, Button, Divider,
   Card, CardContent, Chip, IconButton, Dialog, DialogTitle, DialogContent,
-  DialogActions, Alert, Snackbar
+  DialogActions, Alert, Snackbar, CircularProgress
 } from '@mui/material';
 import {
   Person, Email, School, Edit, Save, Cancel, AccountCircle,
-  CalendarToday, Badge, Security
+  CalendarToday, Badge, Security, PhotoCamera, Delete
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -26,6 +26,7 @@ function Profile() {
     confirmPassword: ''
   });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [imageUploading, setImageUploading] = useState(false);
 
   const handleEdit = () => {
     setEditing(true);
@@ -89,6 +90,63 @@ function Profile() {
     }
   };
 
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setSnackbar({ open: true, message: 'Image size should be less than 5MB', severity: 'error' });
+      return;
+    }
+
+    setImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await api.post('/upload/profile-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const updatedUser = response.data.user;
+      
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      setSnackbar({ open: true, message: 'Profile image updated successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Failed to update profile image', 
+        severity: 'error' 
+      });
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const handleImageRemove = async () => {
+    try {
+      const response = await api.put('/auth/profile', { 
+        name: user?.name,
+        email: user?.email, 
+        studentId: user?.studentId,
+        profileImage: null 
+      });
+      const updatedUser = response.data.user;
+      
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      setSnackbar({ open: true, message: 'Profile image removed successfully!', severity: 'success' });
+    } catch (error) {
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Failed to remove profile image', 
+        severity: 'error' 
+      });
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -124,16 +182,57 @@ function Profile() {
         
         <Grid container spacing={3} alignItems="center">
           <Grid item>
-            <Avatar 
-              sx={{ 
-                width: 100, 
-                height: 100, 
-                background: 'linear-gradient(45deg, #F5BABB, #E8989A)',
-                fontSize: '2.5rem'
-              }}
-            >
-              <Person sx={{ fontSize: '3rem' }} />
-            </Avatar>
+            <Box sx={{ position: 'relative' }}>
+              <Avatar 
+                src={user?.profileImage}
+                sx={{ 
+                  width: 120, 
+                  height: 120, 
+                  background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)',
+                  fontSize: '2.5rem',
+                  border: '4px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+                }}
+              >
+                {!user?.profileImage && <Person sx={{ fontSize: '3.5rem' }} />}
+              </Avatar>
+              <Box sx={{ position: 'absolute', bottom: -8, right: -8, display: 'flex', gap: 1 }}>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="profile-image-upload"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <label htmlFor="profile-image-upload">
+                  <IconButton
+                    component="span"
+                    size="small"
+                    disabled={imageUploading}
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      color: '#568F87',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,1)' }
+                    }}
+                  >
+                    {imageUploading ? <CircularProgress size={16} /> : <PhotoCamera fontSize="small" />}
+                  </IconButton>
+                </label>
+                {user?.profileImage && (
+                  <IconButton
+                    size="small"
+                    onClick={handleImageRemove}
+                    sx={{
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      color: '#E8989A',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,1)' }
+                    }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            </Box>
           </Grid>
           <Grid item xs>
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>

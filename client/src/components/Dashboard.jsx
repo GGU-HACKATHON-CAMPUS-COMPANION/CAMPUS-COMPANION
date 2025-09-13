@@ -95,8 +95,16 @@ function Dashboard() {
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
               }}
             >
-              <Avatar sx={{ mr: 1, width: 32, height: 32 }}>
-                <Person />
+              <Avatar 
+                src={user?.profileImage}
+                sx={{ 
+                  mr: 1, 
+                  width: 32, 
+                  height: 32,
+                  background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                }}
+              >
+                {!user?.profileImage && <Person />}
               </Avatar>
               <Box sx={{ textAlign: 'left' }}>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -123,7 +131,16 @@ function Dashboard() {
             >
               <MenuItem onClick={handleProfileClick}>
                 <ListItemIcon>
-                  <AccountCircle />
+                  <Avatar 
+                    src={user?.profileImage}
+                    sx={{ 
+                      width: 24, 
+                      height: 24,
+                      background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                    }}
+                  >
+                    {!user?.profileImage && <AccountCircle sx={{ fontSize: 16 }} />}
+                  </Avatar>
                 </ListItemIcon>
                 Profile
               </MenuItem>
@@ -205,7 +222,18 @@ function Dashboard() {
               sx={{ gap: 1 }}
             />
             <Tab 
-              icon={<Person />} 
+              icon={
+                <Avatar 
+                  src={user?.profileImage}
+                  sx={{ 
+                    width: 20, 
+                    height: 20,
+                    background: user?.profileImage ? 'transparent' : 'currentColor'
+                  }}
+                >
+                  {!user?.profileImage && <Person sx={{ fontSize: 14 }} />}
+                </Avatar>
+              } 
               label="Profile" 
               iconPosition="start"
               sx={{ gap: 1 }}

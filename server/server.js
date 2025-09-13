@@ -11,6 +11,8 @@ const announcementRoutes = require('./routes/announcements');
 const timetableRoutes = require('./routes/timetables');
 const lostFoundRoutes = require('./routes/lostfound');
 const classRoutes = require('./routes/classes');
+const uploadRoutes = require('./routes/upload');
+const upload = require('./middleware/upload');
 
 const app = express();
 
@@ -44,6 +46,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/timetables', timetableRoutes);
 app.use('/api/lostfound', lostFoundRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Public Chatbot Routes (No Auth Required)
 const Timetable = require('./models/Timetable');
@@ -113,9 +116,38 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Server is working' });
+});
+
+// Test upload route
+app.post('/api/test-upload', upload.single('image'), (req, res) => {
+  console.log('Test upload - Body:', req.body);
+  console.log('Test upload - File:', req.file);
+  res.json({ 
+    message: 'Upload test successful',
+    body: req.body,
+    file: req.file ? { name: req.file.originalname, size: req.file.size } : null
+  });
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Global error handler:', err);
+  
+  // Multer errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({ message: 'File too large' });
+  }
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    console.log('Unexpected field error:', err.field);
+    return res.status(400).json({ message: `Unexpected field: ${err.field}` });
+  }
+  if (err.message && err.message.includes('Unexpected field')) {
+    return res.status(400).json({ message: err.message });
+  }
+  
   res.status(500).json({ 
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'production' ? {} : err.message

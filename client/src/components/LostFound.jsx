@@ -3,11 +3,11 @@ import {
   Card, CardContent, Typography, Grid, Box, CircularProgress, Chip, Button,
   Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl,
   InputLabel, Select, MenuItem, Tabs, Tab, IconButton, Fab, InputAdornment,
-  Avatar, Fade, Paper, Tooltip
+  Avatar, Fade, Paper, Tooltip, CardMedia
 } from '@mui/material';
 import {
   Add, Delete, Edit, Search, LocationOn, Phone, Person, AccessTime,
-  Smartphone, MenuBook, Checkroom, Watch, Description, Category
+  Smartphone, MenuBook, Checkroom, Watch, Description, Category, PhotoCamera, Image
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -22,7 +22,7 @@ function LostFound() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({
-    type: 'lost', title: '', description: '', category: '', location: '', contactInfo: ''
+    type: 'lost', title: '', description: '', category: '', location: '', contactInfo: '', image: '', imageFile: null
   });
   const { user } = useAuth();
 
@@ -64,15 +64,31 @@ function LostFound() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const submitData = new FormData();
+      submitData.append('type', formData.type);
+      submitData.append('title', formData.title);
+      submitData.append('description', formData.description);
+      submitData.append('category', formData.category);
+      submitData.append('location', formData.location);
+      submitData.append('contactInfo', formData.contactInfo);
+      
+      if (formData.imageFile) {
+        submitData.append('image', formData.imageFile);
+      }
+
       if (editingItem) {
-        await api.put(`/lostfound/${editingItem._id}`, formData);
+        await api.put(`/lostfound/${editingItem._id}`, submitData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       } else {
-        await api.post('/lostfound', formData);
+        await api.post('/lostfound', submitData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       }
       setOpen(false);
       setEditingItem(null);
       setFormData({
-        type: 'lost', title: '', description: '', category: '', location: '', contactInfo: ''
+        type: 'lost', title: '', description: '', category: '', location: '', contactInfo: '', image: '', imageFile: null
       });
       fetchItems();
     } catch (error) {
@@ -89,9 +105,24 @@ function LostFound() {
       description: item.description,
       category: item.category,
       location: item.location,
-      contactInfo: item.contactInfo
+      contactInfo: item.contactInfo,
+      image: item.image || '',
+      imageFile: null
     });
     setOpen(true);
+  };
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    const imageUrl = URL.createObjectURL(file);
+    setFormData({ ...formData, image: imageUrl, imageFile: file });
   };
 
   const handleDelete = async (id) => {
@@ -241,6 +272,15 @@ function LostFound() {
                   boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                 }
               }}>
+                {item.image && (
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={item.image}
+                    alt={item.title}
+                    sx={{ objectFit: 'cover' }}
+                  />
+                )}
                 <Box 
                   sx={{ 
                     height: 4, 
@@ -448,10 +488,67 @@ function LostFound() {
               value={formData.contactInfo}
               onChange={(e) => setFormData({...formData, contactInfo: e.target.value})}
             />
+            
+            {/* Image Upload */}
+            <Box sx={{ mt: 2, mb: 1 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Item Image (Optional)
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="item-image-upload"
+                  type="file"
+                  onChange={handleImageUpload}
+                />
+                <label htmlFor="item-image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    startIcon={<PhotoCamera />}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Upload Image
+                  </Button>
+                </label>
+                {formData.image && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<Delete />}
+                    onClick={() => setFormData({ ...formData, image: '', imageFile: null })}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </Box>
+              {formData.image && (
+                <Box sx={{ mt: 2 }}>
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    style={{
+                      width: '100%',
+                      maxHeight: 200,
+                      objectFit: 'cover',
+                      borderRadius: 8
+                    }}
+                  />
+                </Box>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setOpen(false); setEditingItem(null); }}>Cancel</Button>
+          <Button onClick={() => { 
+            setOpen(false); 
+            setEditingItem(null);
+            setFormData({
+              type: 'lost', title: '', description: '', category: '', location: '', contactInfo: '', image: '', imageFile: null
+            });
+          }}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">{editingItem ? 'Update' : 'Post'}</Button>
         </DialogActions>
       </Dialog>

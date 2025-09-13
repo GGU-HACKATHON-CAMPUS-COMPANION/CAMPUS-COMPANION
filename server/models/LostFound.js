@@ -37,6 +37,10 @@ const lostFoundSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'resolved'],
     default: 'active'
+  },
+  image: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true
