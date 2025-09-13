@@ -54,8 +54,8 @@ function Chatbot() {
           onClick={() => setOpen(true)}
           sx={{
             position: 'fixed',
-            bottom: 24,
-            right: 180,
+            bottom: { xs: 16, sm: 24 },
+            right: { xs: 16, sm: 24 },
             background: 'linear-gradient(45deg, #568F87, #064232)',
             '&:hover': {
               background: 'linear-gradient(45deg, #064232, #568F87)',
@@ -70,17 +70,18 @@ function Chatbot() {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        maxWidth="sm"
-        fullWidth
+        maxWidth={false}
         PaperProps={{
           sx: {
             position: 'fixed',
-            bottom: 100,
-            right: 24,
+            bottom: { xs: 80, sm: 90 },
+            right: { xs: 16, sm: 24 },
             m: 0,
-            maxWidth: 400,
-            height: 500,
-            borderRadius: 3
+            width: { xs: 'calc(100vw - 32px)', sm: 380 },
+            maxWidth: { xs: 'calc(100vw - 32px)', sm: 380 },
+            height: { xs: 'calc(100vh - 160px)', sm: 480 },
+            borderRadius: 3,
+            boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04)'
           }
         }}
       >

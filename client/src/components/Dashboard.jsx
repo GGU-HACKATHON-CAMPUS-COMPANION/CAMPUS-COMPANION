@@ -4,7 +4,7 @@ import {
   Avatar, Chip, Fade, Slide, Paper, Menu, MenuItem, Divider, ListItemIcon
 } from '@mui/material';
 import {
-  Logout, Campaign, Schedule, FindInPage, School, Person, Settings, 
+  Logout, Campaign, Schedule, FindInPage, School, Person, Settings as SettingsIcon, 
   AccountCircle, ExpandMore, CalendarToday
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +13,8 @@ import Timetable from './Timetable';
 import LostFound from './LostFound';
 import PersonalTimetable from './PersonalTimetable';
 import NotificationCenter from './NotificationCenter';
+import Profile from './Profile';
+import Settings from './Settings';
 import Chatbot from './Chatbot';
 
 function TabPanel({ children, value, index }) {
@@ -110,15 +112,15 @@ function Dashboard() {
                 }
               }}
             >
-              <MenuItem onClick={handleMenuClose}>
+              <MenuItem onClick={() => { handleMenuClose(); setTab(4); }}>
                 <ListItemIcon>
                   <AccountCircle />
                 </ListItemIcon>
                 Profile
               </MenuItem>
-              <MenuItem onClick={handleMenuClose}>
+              <MenuItem onClick={() => { handleMenuClose(); setTab(5); }}>
                 <ListItemIcon>
-                  <Settings />
+                  <SettingsIcon />
                 </ListItemIcon>
                 Settings
               </MenuItem>
@@ -134,7 +136,7 @@ function Dashboard() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ py: 3 }}>
+      <Container maxWidth="lg" sx={{ py: { xs: 1, sm: 2, md: 3 }, px: { xs: 1, sm: 2 } }}>
         <Paper 
           elevation={0} 
           sx={{ 
@@ -155,9 +157,10 @@ function Dashboard() {
                 borderRadius: 2
               },
               '& .MuiTab-root': {
-                minHeight: 72,
+                minHeight: { xs: 48, sm: 60, md: 72 },
                 fontWeight: 600,
-                fontSize: '1rem',
+                fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' },
+                minWidth: { xs: 80, sm: 100, md: 120 },
                 '&.Mui-selected': {
                   color: '#568F87'
                 }
@@ -166,27 +169,27 @@ function Dashboard() {
           >
             <Tab 
               icon={<Campaign />} 
-              label="Announcements" 
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Announcements</Box>}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
             />
             <Tab 
               icon={<Schedule />} 
-              label="Timetable" 
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Timetable</Box>}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
             />
             <Tab 
               icon={<FindInPage />} 
-              label="Lost & Found" 
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>Lost & Found</Box>}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
             />
             <Tab 
               icon={<CalendarToday />} 
-              label="My Schedule" 
+              label={<Box sx={{ display: { xs: 'none', sm: 'block' } }}>My Schedule</Box>}
               iconPosition="start"
-              sx={{ gap: 1 }}
+              sx={{ gap: 1, minWidth: { xs: 60, sm: 120 } }}
             />
           </Tabs>
 
@@ -201,6 +204,12 @@ function Dashboard() {
           </TabPanel>
           <TabPanel value={tab} index={3}>
             <PersonalTimetable />
+          </TabPanel>
+          <TabPanel value={tab} index={4}>
+            <Profile />
+          </TabPanel>
+          <TabPanel value={tab} index={5}>
+            <Settings />
           </TabPanel>
         </Paper>
       </Container>
