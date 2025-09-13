@@ -3,11 +3,11 @@ import {
   Card, CardContent, Typography, Grid, Chip, Box, CircularProgress, Button,
   Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl,
   InputLabel, Select, MenuItem, IconButton, Avatar, Fade, Skeleton, InputAdornment,
-  ToggleButton, ToggleButtonGroup, Tooltip, Paper
+  ToggleButton, ToggleButtonGroup, Tooltip, Paper, Menu, Snackbar, Alert
 } from '@mui/material';
 import {
   Add, Delete, Campaign, Event, School, Warning, Info, AccessTime, Search,
-  FilterList, Clear
+  FilterList, Clear, Edit, MoreVert
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -23,6 +23,10 @@ function Announcements() {
   const [formData, setFormData] = useState({
     title: '', content: '', category: 'general', priority: 'medium'
   });
+  const [editingId, setEditingId] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { user } = useAuth();
 
   useEffect(() => {
@@ -71,16 +75,67 @@ function Announcements() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/announcements', formData);
+      if (editingId) {
+        await api.put(`/announcements/${editingId}`, formData);
+        setSnackbar({ open: true, message: 'Announcement updated successfully!', severity: 'success' });
+      } else {
+        await api.post('/announcements', formData);
+        setSnackbar({ open: true, message: 'Announcement created successfully!', severity: 'success' });
+      }
       setOpen(false);
+      setEditingId(null);
       setFormData({
         title: '', content: '', category: 'general', priority: 'medium'
       });
       fetchAnnouncements();
     } catch (error) {
-      console.error('Error posting announcement:', error);
-      alert(error.response?.data?.message || 'Error posting announcement');
+      console.error('Error with announcement:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.response?.data?.message || 'Error with announcement', 
+        severity: 'error' 
+      });
     }
+  };
+
+  const handleEdit = (announcement) => {
+    setEditingId(announcement._id);
+    setFormData({
+      title: announcement.title,
+      content: announcement.content,
+      category: announcement.category,
+      priority: announcement.priority
+    });
+    setOpen(true);
+    setMenuAnchor(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this announcement?')) {
+      try {
+        await api.delete(`/announcements/${id}`);
+        setSnackbar({ open: true, message: 'Announcement deleted successfully!', severity: 'success' });
+        fetchAnnouncements();
+      } catch (error) {
+        console.error('Error deleting announcement:', error);
+        setSnackbar({ 
+          open: true, 
+          message: error.response?.data?.message || 'Error deleting announcement', 
+          severity: 'error' 
+        });
+      }
+    }
+    setMenuAnchor(null);
+  };
+
+  const handleMenuOpen = (event, announcement) => {
+    setMenuAnchor(event.currentTarget);
+    setSelectedAnnouncement(announcement);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchor(null);
+    setSelectedAnnouncement(null);
   };
 
   const getPriorityColor = (priority) => {
@@ -262,23 +317,34 @@ function Announcements() {
                       <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
                         {announcement.title}
                       </Typography>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Chip 
-                          label={announcement.category}
-                          size="small"
-                          sx={{ 
-                            bgcolor: `${getCategoryColor(announcement.category)}20`,
-                            color: getCategoryColor(announcement.category),
-                            fontWeight: 600,
-                            textTransform: 'capitalize'
-                          }}
-                        />
-                        <Chip 
-                          label={announcement.priority} 
-                          color={getPriorityColor(announcement.priority)}
-                          size="small"
-                          sx={{ fontWeight: 600, textTransform: 'capitalize' }}
-                        />
+                      <Box display="flex" alignItems="center" gap={1} justifyContent="space-between">
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <Chip 
+                            label={announcement.category}
+                            size="small"
+                            sx={{ 
+                              bgcolor: `${getCategoryColor(announcement.category)}20`,
+                              color: getCategoryColor(announcement.category),
+                              fontWeight: 600,
+                              textTransform: 'capitalize'
+                            }}
+                          />
+                          <Chip 
+                            label={announcement.priority} 
+                            color={getPriorityColor(announcement.priority)}
+                            size="small"
+                            sx={{ fontWeight: 600, textTransform: 'capitalize' }}
+                          />
+                        </Box>
+                        {user?.role === 'admin' && (
+                          <IconButton
+                            size="small"
+                            onClick={(e) => handleMenuOpen(e, announcement)}
+                            sx={{ opacity: 0.7, '&:hover': { opacity: 1 } }}
+                          >
+                            <MoreVert fontSize="small" />
+                          </IconButton>
+                        )}
                       </Box>
                     </Box>
                   </Box>
@@ -375,8 +441,8 @@ function Announcements() {
           alignItems: 'center',
           gap: 2
         }}>
-          <Campaign />
-          Create New Announcement
+          {editingId ? <Edit /> : <Campaign />}
+          {editingId ? 'Edit Announcement' : 'Create New Announcement'}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <Box component="form" onSubmit={handleSubmit}>
@@ -435,7 +501,11 @@ function Announcements() {
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 2 }}>
           <Button 
-            onClick={() => setOpen(false)}
+            onClick={() => {
+              setOpen(false);
+              setEditingId(null);
+              setFormData({ title: '', content: '', category: 'general', priority: 'medium' });
+            }}
             sx={{ borderRadius: 2 }}
           >
             Cancel
@@ -449,10 +519,54 @@ function Announcements() {
               background: 'linear-gradient(45deg, #568F87, #064232)'
             }}
           >
-            Publish
+            {editingId ? 'Update' : 'Publish'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Admin Menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            minWidth: 150,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        <MenuItem 
+          onClick={() => handleEdit(selectedAnnouncement)}
+          sx={{ gap: 2 }}
+        >
+          <Edit fontSize="small" color="primary" />
+          Edit
+        </MenuItem>
+        <MenuItem 
+          onClick={() => handleDelete(selectedAnnouncement?._id)}
+          sx={{ gap: 2, color: 'error.main' }}
+        >
+          <Delete fontSize="small" />
+          Delete
+        </MenuItem>
+      </Menu>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }

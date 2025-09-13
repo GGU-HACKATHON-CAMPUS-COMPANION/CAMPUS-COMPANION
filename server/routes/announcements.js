@@ -36,6 +36,52 @@ router.post('/', auth, announcementValidation, async (req, res) => {
   }
 });
 
+// Update announcement (admin only)
+router.put('/:id', auth, announcementValidation, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+
+    const { title, content, category, priority } = req.body;
+    
+    const announcement = await Announcement.findByIdAndUpdate(
+      req.params.id,
+      { title, content, category, priority },
+      { new: true, runValidators: true }
+    );
+
+    if (!announcement) {
+      return res.status(404).json({ message: 'Announcement not found' });
+    }
+
+    res.json(announcement);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Delete announcement (admin only)
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+
+    const announcement = await Announcement.findByIdAndDelete(req.params.id);
+
+    if (!announcement) {
+      return res.status(404).json({ message: 'Announcement not found' });
+    }
+
+    res.json({ message: 'Announcement deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Get announcements by category
 router.get('/category/:category', async (req, res) => {
   try {
