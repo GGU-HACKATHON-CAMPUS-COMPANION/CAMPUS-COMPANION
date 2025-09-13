@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import Announcements from './Announcements';
 import Timetable from './Timetable';
 import LostFound from './LostFound';
+import Chatbot from './Chatbot';
 
 function TabPanel({ children, value, index }) {
   return (
@@ -38,6 +39,7 @@ function Dashboard() {
           <Tab label="Announcements" />
           <Tab label="Timetable" />
           <Tab label="Lost & Found" />
+          <Tab label="🤖 AI Assistant" />
         </Tabs>
 
         <TabPanel value={tab} index={0}>
@@ -48,6 +50,9 @@ function Dashboard() {
         </TabPanel>
         <TabPanel value={tab} index={2}>
           <LostFound />
+        </TabPanel>
+        <TabPanel value={tab} index={3}>
+          <Chatbot />
         </TabPanel>
       </Container>
     </>

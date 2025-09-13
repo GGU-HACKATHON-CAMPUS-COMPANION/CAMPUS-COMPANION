@@ -84,13 +84,16 @@ You're like a supportive senior student who genuinely cares about their academic
 Act like a **caring academic mentor and friend** who's always ready to help students succeed in their campus journey.
 `;
 
-// API Helper Functions with Fallback
-async function getTimetable(userId) {
+// API Helper Functions with Real Backend Integration
+async function getTimetable(userId, day = null) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/timetables?userId=${userId}`);
+        let url = `${SERVER_URL}/api/chatbot/timetables?userId=${userId}`;
+        if (day) url += `&day=${day}`;
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Server error');
         const data = await response.json();
-        return data.timetables || [];
+        return data || [];
     } catch (error) {
         console.error('Server not available, using fallback data');
         return [
@@ -121,12 +124,15 @@ async function getTimetable(userId) {
     }
 }
 
-async function getAnnouncements(limit = 5) {
+async function getAnnouncements(category = null, limit = 5) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/announcements?limit=${limit}`);
+        let url = `${SERVER_URL}/api/chatbot/announcements?limit=${limit}`;
+        if (category) url += `&category=${category}`;
+        
+        const response = await fetch(url);
         if (!response.ok) throw new Error('Server error');
         const data = await response.json();
-        return data.announcements || [];
+        return data || [];
     } catch (error) {
         console.error('Server not available, using fallback data');
         return [
@@ -155,12 +161,19 @@ async function getAnnouncements(limit = 5) {
     }
 }
 
-async function searchLostFound(query) {
+async function searchLostFound(query, type = null, category = null) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/lostfound?search=${encodeURIComponent(query)}`);
+        let url = `${SERVER_URL}/api/chatbot/lostfound?`;
+        const params = new URLSearchParams();
+        
+        if (type) params.append('type', type);
+        if (category) params.append('category', category);
+        if (query) params.append('search', query);
+        
+        const response = await fetch(url + params.toString());
         if (!response.ok) throw new Error('Server error');
         const data = await response.json();
-        return data.items || [];
+        return data || [];
     } catch (error) {
         console.error('Server not available, using fallback data');
         return [
@@ -194,10 +207,13 @@ async function searchLostFound(query) {
 
 async function getUserProfile(userId) {
     try {
-        const response = await fetch(`${SERVER_URL}/api/auth/profile/${userId}`);
-        if (!response.ok) throw new Error('Server error');
-        const data = await response.json();
-        return data.user || null;
+        // For demo purposes, return mock user data
+        // In production, this would require proper JWT authentication
+        return {
+            name: 'Student User',
+            email: `${userId}@campus.edu`,
+            studentId: userId.toUpperCase()
+        };
     } catch (error) {
         console.error('Server not available, using fallback data');
         return {
@@ -220,62 +236,67 @@ async function getEnhancedResponse(message, userId) {
     
     // Timetable queries with mentoring context
     if (lowerMessage.includes('timetable') || lowerMessage.includes('class') || lowerMessage.includes('schedule') || lowerMessage.includes('missed') || lowerMessage.includes('catch up')) {
-        const timetable = await getTimetable(userId);
+        // Get today's timetable if asking about "today"
+        const dayFilter = lowerMessage.includes('today') ? currentDay : null;
+        const timetable = await getTimetable(userId, dayFilter);
+        
         if (timetable.length > 0) {
-            contextData += `\nUser's Timetable Data: ${JSON.stringify(timetable)}`;
-            
-            // Add class content data
-            const classContents = [
-                {
-                    subject: 'Computer Science',
-                    topic: 'Introduction to Algorithms',
-                    content: 'Covered Big O notation, time complexity analysis, and basic sorting algorithms like bubble sort and selection sort. Homework: Practice problems 1-5 from Chapter 2.'
-                },
-                {
-                    subject: 'Software Engineering', 
-                    topic: 'SDLC Models and Agile Methodology',
-                    content: 'Discussed Waterfall vs Agile development, Scrum framework, sprint planning, and user stories. Covered SOLID principles and design patterns. Next class: Requirements gathering techniques.'
-                },
-                {
-                    subject: 'Database Systems',
-                    topic: 'SQL Joins and Subqueries',
-                    content: 'Practiced INNER JOIN, LEFT JOIN, RIGHT JOIN operations. Covered correlated and non-correlated subqueries. Assignment: Complete database design project Phase 1.'
-                },
-                {
-                    subject: 'Data Structures',
-                    topic: 'Linked Lists and Stack Implementation',
-                    content: 'Implemented singly and doubly linked lists in C++. Covered stack operations (push, pop, peek) and applications. Lab exercise: Build a calculator using stacks.'
-                },
-                {
-                    subject: 'Physics',
-                    topic: 'Electromagnetic Waves and Optics', 
-                    content: 'Studied wave properties, reflection, refraction, and interference patterns. Solved problems on lens equations and mirror formulas. Quiz next week on Chapter 12.'
-                }
-            ];
-            contextData += `\nClass Content Data: ${JSON.stringify(classContents)}`;
-            contextData += `\nMentoring Context: Use the specific class content when available. If specific content isn't available for a subject, use your academic knowledge to provide helpful information about typical topics covered in that course at this level. Always be helpful and educational rather than saying you don't have information.`;
+            contextData += `\nReal-time Timetable Data: ${JSON.stringify(timetable)}`;
+            contextData += `\nCurrent Day Filter: ${dayFilter || 'All days'}`;
         }
+        
+        // Add class content data for academic mentoring
+        const classContents = [
+            { subject: 'Computer Science', topic: 'Introduction to Algorithms', content: 'Covered Big O notation, time complexity analysis, and basic sorting algorithms like bubble sort and selection sort. Homework: Practice problems 1-5 from Chapter 2.' },
+            { subject: 'Software Engineering', topic: 'SDLC Models and Agile Methodology', content: 'Discussed Waterfall vs Agile development, Scrum framework, sprint planning, and user stories. Covered SOLID principles and design patterns. Next class: Requirements gathering techniques.' },
+            { subject: 'Database Systems', topic: 'SQL Joins and Subqueries', content: 'Practiced INNER JOIN, LEFT JOIN, RIGHT JOIN operations. Covered correlated and non-correlated subqueries. Assignment: Complete database design project Phase 1.' },
+            { subject: 'Data Structures', topic: 'Linked Lists and Stack Implementation', content: 'Implemented singly and doubly linked lists in C++. Covered stack operations (push, pop, peek) and applications. Lab exercise: Build a calculator using stacks.' },
+            { subject: 'Physics', topic: 'Electromagnetic Waves and Optics', content: 'Studied wave properties, reflection, refraction, and interference patterns. Solved problems on lens equations and mirror formulas. Quiz next week on Chapter 12.' }
+        ];
+        contextData += `\nClass Content Data: ${JSON.stringify(classContents)}`;
+        contextData += `\nMentoring Context: Use real-time timetable data combined with class content. Provide specific information about current/upcoming classes and help with missed class catch-up using both real data and academic knowledge.`;
     }
     
     // Announcement queries with engagement
     if (lowerMessage.includes('announcement') || lowerMessage.includes('notice') || lowerMessage.includes('news') || lowerMessage.includes('update')) {
-        const announcements = await getAnnouncements();
+        // Check for category-specific requests
+        let category = null;
+        if (lowerMessage.includes('academic')) category = 'academic';
+        else if (lowerMessage.includes('event')) category = 'event';
+        else if (lowerMessage.includes('general')) category = 'general';
+        
+        const announcements = await getAnnouncements(category, 5);
         if (announcements.length > 0) {
-            contextData += `\nLatest Announcements: ${JSON.stringify(announcements)}`;
-            contextData += `\nEngagement Context: Connect announcements to student life, show enthusiasm, and suggest how they can benefit from these updates.`;
+            contextData += `\nReal-time Announcements: ${JSON.stringify(announcements)}`;
+            contextData += `\nCategory Filter: ${category || 'All categories'}`;
+            contextData += `\nEngagement Context: Use real announcement data to provide current campus updates. Show enthusiasm and connect announcements to student needs.`;
         }
     }
     
     // Lost & Found queries with empathy
     if (lowerMessage.includes('lost') || lowerMessage.includes('found') || lowerMessage.includes('missing')) {
-        const searchTerms = message.split(' ').filter(word => word.length > 3);
-        if (searchTerms.length > 0) {
-            const lostFoundItems = await searchLostFound(searchTerms[0]);
-            if (lostFoundItems.length > 0) {
-                contextData += `\nLost & Found Items: ${JSON.stringify(lostFoundItems)}`;
-            }
+        // Determine search parameters
+        let type = null, category = null, searchQuery = null;
+        
+        if (lowerMessage.includes('lost')) type = 'lost';
+        else if (lowerMessage.includes('found')) type = 'found';
+        
+        if (lowerMessage.includes('id') || lowerMessage.includes('card')) category = 'documents';
+        else if (lowerMessage.includes('phone') || lowerMessage.includes('calculator')) category = 'electronics';
+        else if (lowerMessage.includes('wallet') || lowerMessage.includes('bag')) category = 'personal';
+        
+        // Extract search terms
+        const searchTerms = message.split(' ').filter(word => 
+            word.length > 3 && !['lost', 'found', 'missing', 'have', 'been', 'item'].includes(word.toLowerCase())
+        );
+        if (searchTerms.length > 0) searchQuery = searchTerms[0];
+        
+        const lostFoundItems = await searchLostFound(searchQuery, type, category);
+        if (lostFoundItems.length > 0) {
+            contextData += `\nReal-time Lost & Found Items: ${JSON.stringify(lostFoundItems)}`;
+            contextData += `\nSearch Parameters: type=${type}, category=${category}, query=${searchQuery}`;
         }
-        contextData += `\nEmpathy Context: Be understanding about lost items, offer practical help, and provide emotional support. Suggest next steps and alternatives.`;
+        contextData += `\nEmpathy Context: Use real lost & found data to help students. Be understanding, offer practical help, and provide emotional support with specific item information.`;
     }
     
     // Profile queries with personal touch
@@ -357,10 +378,11 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware setup
 app.use(cors({
-    origin: '*',
+    origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['*'],
-    credentials: false
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 app.use(express.json());
 
