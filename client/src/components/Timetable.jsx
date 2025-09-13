@@ -47,6 +47,14 @@ function Timetable() {
     e.preventDefault();
     try { await api.post(`/classes/${selectedClass._id}/timings`, timingData); setOpenTiming(false); setTimingData({ subject: '', day: 'Monday', startTime: '', endTime: '', instructor: '' }); fetchTimings(selectedClass._id); } 
     catch (err) { alert('Error adding timing'); }
+    try {
+      await api.post(`/classes/${selectedClass._id}/timings`, timingData);
+      setOpenTiming(false);
+      setTimingData({ subject: '', day: 'Monday', startTime: '', endTime: '', instructor: '' });
+      fetchTimings(selectedClass._id);
+    } catch (error) {
+      alert('Error adding timing');
+    }
   };
 
   const handleDeleteTiming = async (timingId) => {
@@ -115,6 +123,34 @@ function Timetable() {
                 <Box key={h} height={50} borderBottom="1px solid #eee" display="flex" alignItems="center" justifyContent="center" fontSize={{ xs: 10, sm: 12 }}>
                   {h <= 12 ? `${h} AM` : `${h-12} PM`}
                 </Box>
+
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Subject</TableCell>
+                <TableCell>Day</TableCell>
+                <TableCell>Time</TableCell>
+                <TableCell>Instructor</TableCell>
+                {user?.role === 'admin' && <TableCell>Actions</TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {timings.map((timing) => (
+                <TableRow key={timing._id}>
+                  <TableCell><strong>{timing.subject}</strong></TableCell>
+                  <TableCell>{timing.day}</TableCell>
+                  <TableCell>{timing.startTime} - {timing.endTime}</TableCell>
+                  <TableCell>👨🏫 {timing.instructor}</TableCell>
+                  {user?.role === 'admin' && (
+                    <TableCell>
+                      <IconButton size="small" onClick={() => handleDeleteTiming(timing._id)} color="error">
+                        <Delete />
+                      </IconButton>
+                    </TableCell>
+                  )}
+                </TableRow>
+
               ))}
             </Box>
 
@@ -205,7 +241,16 @@ function Timetable() {
           <DialogTitle>Add Timing for {selectedClass.className}</DialogTitle>
           <DialogContent>
             <Box component="form" onSubmit={handleAddTiming} sx={{ mt: 1 }}>
+
               <TextField fullWidth margin="normal" label="Subject" required value={timingData.subject} onChange={e => setTimingData({...timingData, subject: e.target.value})} />
+
+              <TextField
+                fullWidth margin="normal" label="Subject Name" required
+                value={timingData.subject}
+                onChange={(e) => setTimingData({...timingData, subject: e.target.value})}
+                placeholder="e.g., Mathematics, Physics, Chemistry"
+              />
+
               <FormControl fullWidth margin="normal">
                 <InputLabel>Day</InputLabel>
                 <Select value={timingData.day} onChange={e => setTimingData({...timingData, day: e.target.value})}>
