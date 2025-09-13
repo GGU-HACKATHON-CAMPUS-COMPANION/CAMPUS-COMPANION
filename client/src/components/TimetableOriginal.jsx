@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  Card, CardContent, Typography, Grid, Box, CircularProgress, Button,
+  Card, CardContent, Typography, Grid, Box, CircularProgress, Chip, Button,
   Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl,
   InputLabel, Select, MenuItem, IconButton, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper
@@ -11,7 +11,7 @@ import api from '../services/api';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-function Timetable() {
+function TimetableOriginal() {
   const [classes, setClasses] = useState([]);
   const [timings, setTimings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,20 +107,28 @@ function Timetable() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Subject</TableCell>
-                <TableCell>Day</TableCell>
-                <TableCell>Time</TableCell>
-                <TableCell>Instructor</TableCell>
-                {user?.role === 'admin' && <TableCell>Actions</TableCell>}
+                <TableCell><strong>Subject</strong></TableCell>
+                <TableCell><strong>Day</strong></TableCell>
+                <TableCell><strong>Time</strong></TableCell>
+                <TableCell><strong>Instructor</strong></TableCell>
+                {user?.role === 'admin' && <TableCell><strong>Actions</strong></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {timings.map((timing) => (
                 <TableRow key={timing._id}>
-                  <TableCell><strong>{timing.subject}</strong></TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                      {timing.subject}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{timing.day}</TableCell>
                   <TableCell>{timing.startTime} - {timing.endTime}</TableCell>
-                  <TableCell>👨🏫 {timing.instructor}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      👨‍🏫 {timing.instructor}
+                    </Typography>
+                  </TableCell>
                   {user?.role === 'admin' && (
                     <TableCell>
                       <IconButton size="small" onClick={() => handleDeleteTiming(timing._id)} color="error">
@@ -238,4 +246,4 @@ function Timetable() {
   );
 }
 
-export default Timetable;
+export default TimetableOriginal;
