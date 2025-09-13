@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   Card, CardContent, Typography, Grid, Box, CircularProgress, Button,
   Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl,
-<<<<<<< HEAD
   InputLabel, Select, MenuItem, IconButton, Tooltip, Chip, Avatar, Fade
 } from '@mui/material';
 import {
@@ -63,7 +62,6 @@ function Timetable() {
   };
 
   const handleClassClick = (classItem) => { setSelectedClass(classItem); fetchTimings(classItem._id); };
-<<<<<<< HEAD
 
   const getTopOffset = (time) => { const [h, m] = time.split(':').map(Number); return ((h - 8) * 50 + (m / 60) * 50); };
   const getHeight = (start, end) => { const [h1, m1] = start.split(':').map(Number); const [h2, m2] = end.split(':').map(Number); return ((h2*60+m2)-(h1*60+m1))*(50/60); };
@@ -125,6 +123,7 @@ function Timetable() {
                 </Box>
               ))}
             </Box>
+
             {/* Day Columns */}
             {days.map(day => (
               <Box key={day} borderRight="1px solid #ccc" position="relative">
