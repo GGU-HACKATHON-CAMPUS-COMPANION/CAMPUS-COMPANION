@@ -111,31 +111,48 @@ function Announcements() {
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Box>
-          <Typography variant="h5" fontWeight={700}>Campus Announcements</Typography>
-          <Typography variant="body2" color="text.secondary">Stay updated with the latest campus news and events</Typography>
+          <Typography variant="h5" fontWeight={700} sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>Campus Announcements</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>Stay updated with the latest campus news and events</Typography>
         </Box>
         {user?.role === 'admin' && (
           <Button variant="contained" startIcon={<Add />} onClick={() => setOpen(true)}
-            sx={{ borderRadius: 2, px: 3, background: 'linear-gradient(45deg,#568F87,#064232)', '&:hover': { background: 'linear-gradient(45deg,#064232,#568F87)' } }}>
+            sx={{ 
+              borderRadius: 2, 
+              px: { xs: 2, sm: 3 }, 
+              py: { xs: 1, sm: 1.5 },
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              background: 'linear-gradient(45deg,#568F87,#064232)', 
+              '&:hover': { background: 'linear-gradient(45deg,#064232,#568F87)' } 
+            }}>
             Add Announcement
           </Button>
         )}
       </Box>
 
       {/* Filters */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
-        <Grid container spacing={2} alignItems="center">
+      <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: 3, borderRadius: 3 }}>
+        <Grid container spacing={{ xs: 1.5, sm: 2 }} alignItems="center">
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth placeholder="Search announcements..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{ startAdornment: <InputAdornment position="start"><Search color="action" /></InputAdornment> }}
+              InputProps={{ 
+                startAdornment: <InputAdornment position="start"><Search color="action" /></InputAdornment>,
+                sx: { fontSize: { xs: '0.9rem', sm: '1rem' } }
+              }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
           </Grid>
           <Grid item xs={6} md={3}>
             <FormControl fullWidth>
-              <InputLabel>Category</InputLabel>
-              <Select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} sx={{ borderRadius: 2 }}>
+              <Select 
+                value={categoryFilter} 
+                onChange={(e) => setCategoryFilter(e.target.value)} 
+                sx={{ 
+                  borderRadius: 2,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
+                }} 
+                displayEmpty
+              >
                 <MenuItem value="all">All Categories</MenuItem>
                 <MenuItem value="academic">Academic</MenuItem>
                 <MenuItem value="event">Event</MenuItem>
@@ -146,8 +163,15 @@ function Announcements() {
           </Grid>
           <Grid item xs={6} md={3}>
             <FormControl fullWidth>
-              <InputLabel>Priority</InputLabel>
-              <Select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} sx={{ borderRadius: 2 }}>
+              <Select 
+                value={priorityFilter} 
+                onChange={(e) => setPriorityFilter(e.target.value)} 
+                sx={{ 
+                  borderRadius: 2,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
+                }} 
+                displayEmpty
+              >
                 <MenuItem value="all">All Priorities</MenuItem>
                 <MenuItem value="low">Low</MenuItem>
                 <MenuItem value="medium">Medium</MenuItem>
@@ -157,16 +181,28 @@ function Announcements() {
           </Grid>
           <Grid item xs={12} md={2}>
             <Tooltip title="Clear all filters">
-              <Button variant="outlined" onClick={clearFilters} startIcon={<Clear />} sx={{ borderRadius: 2, width: '100%' }}>Clear</Button>
+              <Button 
+                variant="outlined" 
+                onClick={clearFilters} 
+                startIcon={<Clear />} 
+                sx={{ 
+                  borderRadius: 2, 
+                  width: '100%',
+                  py: { xs: 1, sm: 1.5 },
+                  fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                }}
+              >
+                Clear
+              </Button>
             </Tooltip>
           </Grid>
         </Grid>
       </Paper>
 
       {/* Announcements */}
-      <Grid container spacing={3}>
+      <Grid container spacing={{ xs: 2, sm: 3 }}>
         {filteredAnnouncements.map((announcement, index) => (
-          <Grid item xs={12} sm={6} md={4} key={announcement._id}>
+          <Grid item xs={12} sm={12} md={6} lg={4} key={announcement._id}>
             <Fade in timeout={300 + index * 100}>
               <Card sx={{ height: '100%', borderRadius: 3, overflow: 'hidden', '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 25px rgba(0,0,0,0.15)' } }}>
                 <Box height={4} sx={{ background: `linear-gradient(90deg, ${getCategoryColor(announcement.category)}, ${getCategoryColor(announcement.category)}80)` }} />
@@ -174,7 +210,7 @@ function Announcements() {
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
                     <Avatar sx={{ bgcolor: getCategoryColor(announcement.category) }}>{getCategoryIcon(announcement.category)}</Avatar>
                     <Box flex={1}>
-                      <Typography variant="h6" fontWeight={600} mb={0.5}>{announcement.title}</Typography>
+                      <Typography variant="h6" fontWeight={600} mb={0.5} sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>{announcement.title}</Typography>
                       <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Box display="flex" gap={1}>
                           <Chip label={announcement.category} size="small" sx={{ bgcolor: `${getCategoryColor(announcement.category)}20`, color: getCategoryColor(announcement.category), fontWeight: 600, textTransform: 'capitalize' }} />
@@ -186,7 +222,7 @@ function Announcements() {
                       </Box>
                     </Box>
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{announcement.content}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{announcement.content}</Typography>
                   <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}><AccessTime sx={{ fontSize: 14 }} />{new Date(announcement.createdAt).toLocaleDateString()}</Typography>
                     <Typography variant="caption" color="primary.main" fontWeight={600}>By {announcement.author}</Typography>

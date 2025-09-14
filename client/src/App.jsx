@@ -5,6 +5,11 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import LandingPage from './components/LandingPage';
+import ContactSupport from './components/ContactSupport';
+import HelpCenter from './components/HelpCenter';
+import OurMission from './components/OurMission';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const theme = createTheme({
@@ -45,7 +50,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Space Grotesk", "Inter", system-ui, -apple-system, sans-serif',
     h4: {
       fontWeight: 800,
       fontSize: '2rem',
@@ -128,6 +133,46 @@ function AppContent() {
           <Dashboard />
         </ProtectedRoute>
       } />
+      <Route path="/home" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/schedule" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/plans" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/lost-found" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/contact-support" element={<ContactSupport />} />
+      <Route path="/help-center" element={<HelpCenter />} />
+      <Route path="/our-mission" element={<OurMission />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
     </Routes>
   );
 }

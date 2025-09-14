@@ -196,7 +196,12 @@ function LostFound() {
             onClick={() => setOpen(true)}
             sx={{
               borderRadius: 2,
-              background: 'linear-gradient(45deg, #2563eb, #1d4ed8)'
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              border: '2px solid black',
+              color: 'black',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)'
             }}
           >
             Add Item
@@ -275,7 +280,7 @@ function LostFound() {
                 {item.image && (
                   <CardMedia
                     component="img"
-                    height="200"
+                    height="120"
                     image={item.image}
                     alt={item.title}
                     sx={{ objectFit: 'cover' }}
@@ -426,17 +431,20 @@ function LostFound() {
       {/* Floating Action Button */}
       <Tooltip title="Post new item">
         <Fab
-          color="primary"
           onClick={() => setOpen(true)}
           sx={{
             position: 'fixed',
             bottom: { xs: 80, sm: 24 },
             left: { xs: 16, sm: 24 },
-            background: 'linear-gradient(45deg, #2563eb, #1d4ed8)',
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '2px solid black',
+            color: 'black',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)',
             '&:hover': {
-              background: 'linear-gradient(45deg, #1d4ed8, #1e40af)',
-            },
-            boxShadow: '0 8px 25px rgba(86, 143, 135, 0.3)'
+              background: 'rgba(255,255,255,0.3)'
+            }
           }}
         >
           <Add />

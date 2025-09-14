@@ -143,15 +143,19 @@ function PersonalTimetable() {
 
       <Tooltip title="Add new event">
         <Fab
-          color="primary"
           onClick={() => setOpen(true)}
           sx={{
             position: 'fixed',
             bottom: { xs: 140, sm: 100 },
             left: { xs: 16, sm: 24 },
-            background: 'linear-gradient(45deg, #568F87, #064232)',
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '2px solid black',
+            color: 'black',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)',
             '&:hover': {
-              background: 'linear-gradient(45deg, #064232, #568F87)',
+              background: 'rgba(255,255,255,0.3)'
             }
           }}
         >

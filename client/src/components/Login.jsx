@@ -43,31 +43,42 @@ function Login() {
     }
   };
 
-  // Glossy input style
-  const glossyInputStyle = {
+  // Liquid crystal input style
+  const liquidInputStyle = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 2,
-      backgroundColor: 'rgba(255,255,255,0.15)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255,255,255,0.3)',
+      borderRadius: 0,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: '2px solid rgba(255,255,255,0.3)',
+      transition: 'all 0.2s ease',
       '& fieldset': { border: 'none' },
-      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
-      '& input': { color: 'white', paddingTop: '20px' },
+      '&:hover': { 
+        backgroundColor: 'rgba(255,255,255,0.15)',
+        border: '2px solid rgba(255,255,255,0.4)'
+      },
+      '&.Mui-focused': {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        border: '2px solid rgba(255,255,255,0.6)',
+        boxShadow: '0 0 0 2px rgba(255,255,255,0.2)'
+      },
+      '& input': { 
+        color: 'white', 
+        fontSize: { xs: '0.9rem', sm: '1rem' },
+        '&::placeholder': { color: 'rgba(255,255,255,0.6)' }
+      },
       '& textarea': { color: 'white' },
     },
-    '& .MuiInputLabel-root': {
-      color: 'rgba(255,255,255,0.8)',
-      marginBottom: '4px',
-      '&.Mui-focused': { color: 'white' },
-      '&.MuiFormLabel-filled': { color: 'white' }
+    '& .MuiInputAdornment-root .MuiSvgIcon-root': {
+      color: 'rgba(255,255,255,0.7)'
     },
-    mb: 2 // spacing between fields
+    mb: 1.5
   };
 
   return (
     <Box sx={{
       minHeight: '100vh',
-      backgroundImage: 'url(/back-img.jpg)',
+      backgroundImage: 'url("https://images.pexels.com/photos/31938134/pexels-photo-31938134.jpeg")',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
@@ -79,40 +90,51 @@ function Login() {
         content: '""',
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.4)',
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 100%)',
         zIndex: 0
       }
     }}>
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
         <Slide direction="up" in={true} mountOnEnter unmountOnExit>
-          <Paper elevation={24} sx={{
-            p: { xs: 2, sm: 3, md: 4 },
-            borderRadius: 3,
-            background: 'rgba(255,255,255,0.15)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+          <Paper elevation={0} sx={{
+            p: { xs: 2, sm: 2.5 },
+            borderRadius: 0,
+            background: 'rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '2px solid rgba(255,255,255,0.2)',
+            boxShadow: '0 0 0 4px rgba(255,255,255,0.1)',
             position: 'relative'
           }}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Avatar sx={{
-                width: 80, height: 80, mx: 'auto', mb: 2,
-                background: 'linear-gradient(45deg, #568F87, #064232)'
+            <Box sx={{ textAlign: 'center', mb: 2 }}>
+              <Box sx={{
+                width: { xs: 50, sm: 60 }, height: { xs: 50, sm: 60 }, mx: 'auto', mb: 1.5,
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(20px)',
+                border: '2px solid rgba(255,255,255,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
-                <School sx={{ fontSize: 40 }} />
-              </Avatar>
-              <Typography variant="h4" sx={{
-                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-                fontWeight: 700,
-                background: 'linear-gradient(45deg, #568F87, #064232)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
+                <School sx={{ fontSize: { xs: 35, sm: 40 }, color: 'white' }} />
+              </Box>
+              <Typography variant="h5" sx={{
+                fontSize: { xs: '1.5rem', sm: '1.75rem' },
+                fontWeight: 800,
+                color: 'white',
+                textShadow: '0 2px 10px rgba(0,0,0,0.3)',
+                fontFamily: "'Space Grotesk', sans-serif",
+                letterSpacing: '0.5px'
               }}>
-                Campus Companion
+                CAMPUS COMPANION
               </Typography>
-              <Typography variant="body1" color="white" sx={{ mt: 1 }}>
-                Your digital campus assistant
+              <Typography variant="body2" sx={{ 
+                mt: 0.5, 
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: { xs: '0.8rem', sm: '0.9rem' },
+                fontWeight: 500
+              }}>
+                Your AI-powered campus assistant
               </Typography>
             </Box>
 
@@ -121,14 +143,25 @@ function Login() {
               onChange={(e, newValue) => setTab(newValue)}
               centered
               sx={{
+                mb: 2,
                 '& .MuiTabs-indicator': {
-                  background: 'linear-gradient(45deg, #568F87, #F5BABB)',
-                  height: 3,
-                  borderRadius: 2
+                  background: 'rgba(255,255,255,0.8)',
+                  height: 4,
+                  borderRadius: 0
                 },
                 '& .MuiTab-root': {
-                  color: 'white !important',
-                  '&.Mui-selected': { color: 'white !important' }
+                  color: 'rgba(255,255,255,0.7) !important',
+                  fontWeight: 600,
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  '&.Mui-selected': { 
+                    color: 'white !important',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                  },
+                  '&:hover': {
+                    color: 'rgba(255,255,255,0.9) !important'
+                  }
                 }
               }}
             >
@@ -159,7 +192,7 @@ function Login() {
                       InputProps={{
                         startAdornment: <InputAdornment position="start"><Person color="primary" /></InputAdornment>,
                       }}
-                      sx={glossyInputStyle}
+                      sx={liquidInputStyle}
                     />
                     <TextField
                       fullWidth
@@ -172,7 +205,7 @@ function Login() {
                       InputProps={{
                         startAdornment: <InputAdornment position="start"><Badge color="primary" /></InputAdornment>,
                       }}
-                      sx={glossyInputStyle}
+                      sx={liquidInputStyle}
                     />
                   </Box>
                 </Fade>
@@ -190,7 +223,7 @@ function Login() {
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><Email color="primary" /></InputAdornment>,
                 }}
-                sx={glossyInputStyle}
+                sx={liquidInputStyle}
               />
 
               <TextField
@@ -206,13 +239,13 @@ function Login() {
                   startAdornment: <InputAdornment position="start"><Lock color="primary" /></InputAdornment>,
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: 'rgba(255,255,255,0.7)' }}>
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   )
                 }}
-                sx={glossyInputStyle}
+                sx={liquidInputStyle}
               />
 
               <Button
@@ -222,13 +255,27 @@ function Login() {
                 size="large"
                 disabled={loading}
                 sx={{
-                  mt: 4,
-                  py: 1.5,
-                  borderRadius: 2,
-                  background: 'linear-gradient(45deg, #568F87, #064232)',
-                  '&:hover': { background: 'linear-gradient(45deg, #064232, #568F87)' },
-                  fontWeight: 600,
-                  fontSize: '1.1rem'
+                  mt: 2,
+                  py: { xs: 1.5, sm: 2 },
+                  borderRadius: 0,
+                  background: 'rgba(255,255,255,0.2)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  border: '2px solid rgba(255,255,255,0.4)',
+                  color: 'white',
+                  fontWeight: 700,
+                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  transition: 'all 0.2s ease',
+                  '&:hover': { 
+                    background: 'rgba(255,255,255,0.3)',
+                    border: '2px solid rgba(255,255,255,0.6)'
+                  },
+                  '&:disabled': {
+                    background: 'rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.5)'
+                  }
                 }}
               >
                 {loading ? 'Processing...' : (tab === 0 ? 'Sign In' : 'Create Account')}

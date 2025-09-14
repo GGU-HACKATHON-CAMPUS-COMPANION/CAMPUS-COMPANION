@@ -156,8 +156,12 @@ function Profile() {
           p: 4,
           mb: 3,
           borderRadius: 3,
-          background: 'linear-gradient(135deg, #568F87 0%, #064232 100%)',
-          color: 'white',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.1) 100%)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.3)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)',
+          color: 'black',
           position: 'relative',
           overflow: 'hidden'
         }}
@@ -171,8 +175,8 @@ function Profile() {
                   width: 120,
                   height: 120,
                   fontSize: '2.5rem',
-                  border: '4px solid rgba(255,255,255,0.2)',
-                  background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                  border: '4px solid rgba(0,0,0,0.1)',
+                  background: user?.profileImage ? 'transparent' : 'rgba(0,0,0,0.1)'
                 }}
               >
                 {!user?.profileImage && <Person sx={{ fontSize: '3.5rem' }} />}
@@ -208,7 +212,7 @@ function Profile() {
             </Box>
           </Grid>
           <Grid item>
-            <IconButton onClick={handleEdit} color="inherit">
+            <IconButton onClick={handleEdit} sx={{ color: 'black' }}>
               <Edit />
             </IconButton>
           </Grid>
@@ -218,7 +222,13 @@ function Profile() {
       <Grid container spacing={3}>
         {/* Personal Info */}
         <Grid item xs={12} md={8}>
-          <Card>
+          <Card sx={{
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)'
+          }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Personal Information
@@ -254,7 +264,14 @@ function Profile() {
 
         {/* Account Details */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ mb: 3 }}>
+          <Card sx={{ 
+            mb: 3,
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2)'
+          }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Account Details

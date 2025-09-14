@@ -9,32 +9,7 @@ import {
 
 function NotificationCenter() {
   const [anchorEl, setAnchorEl] = useState(null);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'announcement',
-      title: 'New Campus Event',
-      message: 'Tech fest registration is now open',
-      time: '2 hours ago',
-      read: false
-    },
-    {
-      id: 2,
-      type: 'lostfound',
-      title: 'Item Found',
-      message: 'Someone found your lost phone',
-      time: '1 day ago',
-      read: false
-    },
-    {
-      id: 3,
-      type: 'schedule',
-      title: 'Class Reminder',
-      message: 'Mathematics class in 30 minutes',
-      time: '30 min ago',
-      read: true
-    }
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

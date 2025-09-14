@@ -12,8 +12,6 @@ import {
 function Settings() {
   const [settings, setSettings] = useState({
     notifications: true,
-    darkMode: false,
-    language: 'english',
     autoSync: true,
     soundEnabled: true,
     volume: 70,
@@ -50,29 +48,7 @@ function Settings() {
         }
       ]
     },
-    {
-      title: 'Appearance',
-      icon: <DarkMode />,
-      items: [
-        {
-          label: 'Dark Mode',
-          key: 'darkMode',
-          type: 'switch',
-          description: 'Switch to dark theme'
-        },
-        {
-          label: 'Language',
-          key: 'language',
-          type: 'select',
-          options: [
-            { value: 'english', label: 'English' },
-            { value: 'spanish', label: 'Español' },
-            { value: 'french', label: 'Français' }
-          ],
-          description: 'Choose your preferred language'
-        }
-      ]
-    },
+
     {
       title: 'Data & Storage',
       icon: <Storage />,
@@ -127,7 +103,7 @@ function Settings() {
         );
       case 'select':
         return (
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: { xs: 100, sm: 120 } }}>
             <Select
               value={settings[item.key]}
               onChange={(e) => handleSettingChange(item.key, e.target.value)}
@@ -143,7 +119,7 @@ function Settings() {
         );
       case 'slider':
         return (
-          <Box sx={{ width: 120, mr: 2 }}>
+          <Box sx={{ width: { xs: 80, sm: 120 }, mr: 2 }}>
             <Slider
               value={settings[item.key]}
               onChange={(e, value) => handleSettingChange(item.key, value)}
@@ -198,7 +174,13 @@ function Settings() {
             <List sx={{ p: 0 }}>
               {section.items.map((item, itemIndex) => (
                 <Box key={itemIndex}>
-                  <ListItem sx={{ px: 0, py: { xs: 1.5, sm: 2 } }}>
+                  <ListItem sx={{ 
+                    px: 0, 
+                    py: { xs: 1.5, sm: 2 },
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    gap: { xs: 1, sm: 0 }
+                  }}>
                     <ListItemText
                       primary={
                         <Typography variant="subtitle1" sx={{ 
@@ -216,9 +198,17 @@ function Settings() {
                         </Typography>
                       }
                     />
-                    <ListItemSecondaryAction>
+                    <Box sx={{ 
+                      position: { xs: 'static', sm: 'absolute' },
+                      right: { sm: 16 },
+                      top: { sm: '50%' },
+                      transform: { sm: 'translateY(-50%)' },
+                      width: { xs: '100%', sm: 'auto' },
+                      display: 'flex',
+                      justifyContent: { xs: 'flex-end', sm: 'center' }
+                    }}>
                       {renderSettingControl(item)}
-                    </ListItemSecondaryAction>
+                    </Box>
                   </ListItem>
                   {itemIndex < section.items.length - 1 && <Divider />}
                 </Box>
@@ -235,25 +225,40 @@ function Settings() {
             Quick Actions
           </Typography>
           
-          <Box display="flex" flexDirection="column" gap={2}>
+          <Box display="flex" flexDirection="column" gap={{ xs: 1.5, sm: 2 }}>
             <Button
               variant="outlined"
               startIcon={<Help />}
-              sx={{ borderRadius: 2, justifyContent: 'flex-start' }}
+              sx={{ 
+                borderRadius: 2, 
+                justifyContent: 'flex-start',
+                py: { xs: 1.5, sm: 1 },
+                fontSize: { xs: '0.9rem', sm: '1rem' }
+              }}
             >
               Help & Support
             </Button>
             <Button
               variant="outlined"
               startIcon={<Info />}
-              sx={{ borderRadius: 2, justifyContent: 'flex-start' }}
+              sx={{ 
+                borderRadius: 2, 
+                justifyContent: 'flex-start',
+                py: { xs: 1.5, sm: 1 },
+                fontSize: { xs: '0.9rem', sm: '1rem' }
+              }}
             >
               About Campus Companion
             </Button>
             <Button
               variant="outlined"
               color="error"
-              sx={{ borderRadius: 2, justifyContent: 'flex-start' }}
+              sx={{ 
+                borderRadius: 2, 
+                justifyContent: 'flex-start',
+                py: { xs: 1.5, sm: 1 },
+                fontSize: { xs: '0.9rem', sm: '1rem' }
+              }}
             >
               Clear Cache & Data
             </Button>
@@ -262,14 +267,55 @@ function Settings() {
       </Card>
 
       {/* App Info */}
-      <Box sx={{ mt: 4, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          Campus Companion v1.0.0
-        </Typography>
-        <Typography variant="caption" color="text.disabled">
-          Built with ❤️ for students
-        </Typography>
-      </Box>
+      <Card sx={{ mt: 3, borderRadius: 3 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+          <Box sx={{ mb: { xs: 2, sm: 3 } }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+              Campus Companion
+            </Typography>
+            <Typography variant="h6" color="primary" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+              v1.0.0
+            </Typography>
+          </Box>
+          
+          <Typography variant="body1" sx={{ mb: { xs: 2, sm: 3 }, lineHeight: 1.6, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+            Your intelligent campus assistant designed to make student life easier and more connected.
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 2 }, mb: { xs: 2, sm: 3 } }}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                🎓 For Students, By Students
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                Built at Godavari Global University
+              </Typography>
+            </Box>
+            
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                🚀 Features
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                AI Assistant • Timetables • Lost & Found • Announcements
+              </Typography>
+            </Box>
+            
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                💻 Tech Stack
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+                React • Node.js • MongoDB • Material-UI
+              </Typography>
+            </Box>
+          </Box>
+          
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
+            "Making campus life easier, one conversation at a time!"
+          </Typography>
+        </CardContent>
+      </Card>
     </Box>
   );
 }
