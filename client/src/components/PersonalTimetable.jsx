@@ -1,127 +1,271 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Card, CardContent, Typography, Grid, Box, Button, Dialog, DialogTitle,
-  DialogContent, TextField, DialogActions, FormControl, InputLabel, Select,
-  MenuItem, Chip, IconButton, Tooltip, Fab
-} from '@mui/material';
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  Box,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+  Tooltip,
+  Fab,
+  useMediaQuery,
+} from "@mui/material";
 import {
-  Add, Delete, Event, Assignment, School, AccessTime
-} from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
+  Add,
+  Delete,
+  Event,
+  Assignment,
+  School,
+  AccessTime,
+} from "@mui/icons-material";
+import { useTheme } from "@mui/material/styles";
+import { useAuth } from "../context/AuthContext";
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const days = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+const STORAGE_KEY = "personal_timetable";
 
 function PersonalTimetable() {
   const [events, setEvents] = useState([]);
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
-    title: '', type: 'class', day: 'Monday', startTime: '', endTime: '', location: '', notes: ''
+    title: "",
+    type: "class",
+    day: "Monday",
+    startTime: "",
+    endTime: "",
+    location: "",
+    notes: "",
   });
   const { user } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // ✅ Load from localStorage with expiry
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const { data, expiry } = JSON.parse(saved);
+      if (Date.now() < expiry) {
+        setEvents(data);
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }, []);
+
+  // ✅ Save to localStorage with 9-day expiry
+  useEffect(() => {
+    const expiry = Date.now() + 9 * 24 * 60 * 60 * 1000;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ data: events, expiry }));
+  }, [events]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const newEvent = {
       id: Date.now(),
       ...formData,
-      userId: user.id
+      userId: user?.id || "guest",
     };
-    setEvents(prev => [...prev, newEvent]);
+    console.log('Adding new event:', newEvent);
+    setEvents((prev) => {
+      const updated = [...prev, newEvent];
+      console.log('Updated events:', updated);
+      return updated;
+    });
     setOpen(false);
     setFormData({
-      title: '', type: 'class', day: 'Monday', startTime: '', endTime: '', location: '', notes: ''
+      title: "",
+      type: "class",
+      day: "Monday",
+      startTime: "",
+      endTime: "",
+      location: "",
+      notes: "",
     });
   };
 
   const handleDelete = (id) => {
-    setEvents(prev => prev.filter(event => event.id !== id));
+    setEvents((prev) => prev.filter((event) => event.id !== id));
   };
 
   const getTypeColor = (type) => {
     const colors = {
-      class: '#568F87',
-      assignment: '#F5BABB',
-      personal: '#7BA8A0',
-      exam: '#E8989A'
+      class: "#2563eb",
+      assignment: "#f59e0b",
+      personal: "#10b981",
+      exam: "#ef4444",
     };
-    return colors[type] || '#568F87';
+    return colors[type] || "#6b7280";
   };
 
   const getTypeIcon = (type) => {
     switch (type) {
-      case 'class': return <School />;
-      case 'assignment': return <Assignment />;
-      case 'personal': return <Event />;
-      default: return <AccessTime />;
+      case "class":
+        return <School fontSize="small" />;
+      case "assignment":
+        return <Assignment fontSize="small" />;
+      case "personal":
+        return <Event fontSize="small" />;
+      default:
+        return <AccessTime fontSize="small" />;
     }
   };
 
+  // ✅ Time slots for calendar view
+  const timeSlots = Array.from({ length: 15 }, (_, i) => `${8 + i}:00`);
+  
+  // Debug: Log current events
+  console.log('Current events:', events);
+
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            My Personal Schedule
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage your classes, assignments, and personal events
-          </Typography>
-        </Box>
+    <Box className='p-[2%]'>
+      <Box mb={3}>
+        <Typography
+          variant={isMobile ? "h6" : "h5"}
+          sx={{ fontWeight: 700, color: "text.primary" }}
+          align={isMobile ? "center" : "left"}
+        >
+          Weekly Schedule
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          align={isMobile ? "center" : "left"}
+        >
+          A modern weekly calendar for your classes, assignments & personal events
+        </Typography>
       </Box>
 
-      <Grid container spacing={3}>
-        {days.map(day => (
-          <Grid size={{ xs: 12, md: 6, lg: 4 }} key={day}>
-            <Card sx={{ minHeight: { xs: 250, sm: 300 } }}>
-              <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'primary.main' }}>
-                  {day}
-                </Typography>
-                <Box display="flex" flexDirection="column" gap={1}>
+      {/* ✅ Responsive scrollable calendar */}
+      <Box
+        sx={{
+          overflowX: "auto",
+          border: "1px solid #e5e7eb",
+          borderRadius: 2,
+        }}
+      >
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "80px repeat(7, minmax(140px, 1fr))",
+            minWidth: "900px", // forces horizontal scroll on small screens
+          }}
+        >
+          {/* Header row */}
+          <Box />
+          {days.map((day) => (
+            <Box
+              key={day}
+              sx={{
+                p: { xs: 0.5, sm: 1 },
+                borderLeft: "1px solid #e5e7eb",
+                textAlign: "center",
+                bgcolor: "#f9fafb",
+                fontWeight: 600,
+                fontSize: { xs: "0.75rem", sm: "0.9rem" },
+              }}
+            >
+              {day}
+            </Box>
+          ))}
+
+          {/* Time slots with events */}
+          {timeSlots.map((time) => (
+            <React.Fragment key={`time-${time}`}>
+              {/* Time label */}
+              <Box
+                sx={{
+                  borderTop: "1px solid #e5e7eb",
+                  p: 0.5,
+                  fontSize: "0.75rem",
+                  color: "text.secondary",
+                  textAlign: "right",
+                }}
+              >
+                {time}
+              </Box>
+
+              {/* Events per day */}
+              {days.map((day) => (
+                <Box
+                  key={`${day}-${time}`}
+                  sx={{
+                    borderTop: "1px solid #e5e7eb",
+                    borderLeft: "1px solid #e5e7eb",
+                    minHeight: { xs: 40, sm: 50 },
+                    p: 0.5,
+                  }}
+                >
                   {events
-                    .filter(event => event.day === day)
-                    .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                    .map(event => (
-                      <Card key={event.id} sx={{ 
-                        bgcolor: `${getTypeColor(event.type)}15`,
-                        border: `1px solid ${getTypeColor(event.type)}30`
-                      }}>
-                        <CardContent sx={{ 
-                          p: { xs: 1.5, sm: 2 }, 
-                          '&:last-child': { pb: { xs: 1.5, sm: 2 } } 
-                        }}>
-                          <Box display="flex" justifyContent="space-between" alignItems="start">
-                            <Box flex={1}>
-                              <Box display="flex" alignItems="center" gap={1} mb={1}>
-                                {getTypeIcon(event.type)}
-                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                  {event.title}
-                                </Typography>
-                              </Box>
-                              <Typography variant="body2" color="text.secondary">
+                    .filter((e) => {
+                      if (!e.startTime) return false;
+                      const eventStartHour = parseInt(e.startTime.split(':')[0]);
+                      const slotHour = parseInt(time.split(':')[0]);
+                      const matches = e.day === day && eventStartHour === slotHour;
+                      console.log(`Checking: ${e.title} - Day: ${e.day}===${day}, Hour: ${eventStartHour}===${slotHour}, Match: ${matches}`);
+                      return matches;
+                    })
+                    .map((event) => (
+                      <Card
+                        key={event.id}
+                        sx={{
+                          bgcolor: `${getTypeColor(event.type)}22`,
+                          borderLeft: `4px solid ${getTypeColor(event.type)}`,
+                          mb: 0.5,
+                          boxShadow: "none",
+                        }}
+                      >
+                        <CardContent sx={{ p: 1 }}>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            flexWrap="wrap"
+                            gap={0.5}
+                          >
+                            <Box>
+                              <Typography
+                                variant="subtitle2"
+                                sx={{
+                                  fontWeight: 600,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  fontSize: { xs: "0.75rem", sm: "0.85rem" },
+                                }}
+                              >
+                                {getTypeIcon(event.type)} {event.title}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 {event.startTime} - {event.endTime}
                               </Typography>
-                              {event.location && (
-                                <Typography variant="caption" color="text.secondary">
-                                  📍 {event.location}
-                                </Typography>
-                              )}
-                              <Box mt={1}>
-                                <Chip 
-                                  label={event.type}
-                                  size="small"
-                                  sx={{ 
-                                    bgcolor: getTypeColor(event.type),
-                                    color: 'white',
-                                    textTransform: 'capitalize'
-                                  }}
-                                />
-                              </Box>
                             </Box>
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               onClick={() => handleDelete(event.id)}
-                              sx={{ color: 'error.main' }}
+                              sx={{ color: "error.main" }}
                             >
                               <Delete fontSize="small" />
                             </IconButton>
@@ -129,37 +273,41 @@ function PersonalTimetable() {
                         </CardContent>
                       </Card>
                     ))}
-                  {events.filter(event => event.day === day).length === 0 && (
-                    <Typography variant="body2" color="text.disabled" sx={{ textAlign: 'center', py: 4 }}>
-                      No events scheduled
-                    </Typography>
-                  )}
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              ))}
+            </React.Fragment>
+          ))}
+        </Box>
+      </Box>
 
+      {/* Add button */}
       <Tooltip title="Add new event">
         <Fab
           color="primary"
           onClick={() => setOpen(true)}
           sx={{
-            position: 'fixed',
-            bottom: { xs: 140, sm: 100 },
-            left: { xs: 16, sm: 24 },
-            background: 'linear-gradient(45deg, #568F87, #064232)',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #064232, #568F87)',
-            }
+            position: "fixed",
+            bottom: { xs: 80, sm: 104 },
+            right: { xs: 16, sm: 24 },
+            boxShadow: 3,
+            background:'black',
+            '&:hover': { background: 'grey' },
+            zIndex: 1000,
           }}
         >
           <Add />
         </Fab>
       </Tooltip>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
+      {/* Dialog form */}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        disableRestoreFocus
+        keepMounted={false}
+      >
         <DialogTitle>Add New Event</DialogTitle>
         <DialogContent>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
@@ -169,13 +317,17 @@ function PersonalTimetable() {
               label="Event Title"
               required
               value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
             />
             <FormControl fullWidth margin="normal">
               <InputLabel>Type</InputLabel>
               <Select
                 value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
               >
                 <MenuItem value="class">📚 Class</MenuItem>
                 <MenuItem value="assignment">📝 Assignment</MenuItem>
@@ -187,15 +339,19 @@ function PersonalTimetable() {
               <InputLabel>Day</InputLabel>
               <Select
                 value={formData.day}
-                onChange={(e) => setFormData({...formData, day: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, day: e.target.value })
+                }
               >
-                {days.map(day => (
-                  <MenuItem key={day} value={day}>{day}</MenuItem>
+                {days.map((day) => (
+                  <MenuItem key={day} value={day}>
+                    {day}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
             <Grid container spacing={2}>
-              <Grid size={6}>
+              <Grid item xs={6}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -203,11 +359,13 @@ function PersonalTimetable() {
                   type="time"
                   required
                   value={formData.startTime}
-                  onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startTime: e.target.value })
+                  }
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid size={6}>
+              <Grid item xs={6}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -215,7 +373,9 @@ function PersonalTimetable() {
                   type="time"
                   required
                   value={formData.endTime}
-                  onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endTime: e.target.value })
+                  }
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
@@ -225,7 +385,9 @@ function PersonalTimetable() {
               margin="normal"
               label="Location"
               value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, location: e.target.value })
+              }
             />
             <TextField
               fullWidth
@@ -234,13 +396,17 @@ function PersonalTimetable() {
               multiline
               rows={2}
               value={formData.notes}
-              onChange={(e) => setFormData({...formData, notes: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
             />
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">Add Event</Button>
+          <Button onClick={handleSubmit} variant="contained">
+            Add Event
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

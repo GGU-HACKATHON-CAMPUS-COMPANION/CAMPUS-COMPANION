@@ -5,8 +5,7 @@ import {
   DialogActions, Alert, Snackbar, CircularProgress
 } from '@mui/material';
 import {
-  Person, Email, School, Edit, Save, Cancel, AccountCircle,
-  CalendarToday, Badge, Security, PhotoCamera, Delete, Phone, LocationOn
+  Person, Email, School, Edit, Save, Cancel, Badge, Security, PhotoCamera, Delete
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -32,7 +31,6 @@ function Profile() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [imageUploading, setImageUploading] = useState(false);
 
-  // ---------------- Edit / Save ----------------
   const handleEdit = () => setEditing(true);
   const handleCancel = () => setEditing(false);
 
@@ -40,10 +38,8 @@ function Profile() {
     try {
       const response = await api.put('/auth/profile', editData);
       const updatedUser = response.data.user;
-
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-
       setEditing(false);
       setSnackbar({ open: true, message: 'Profile updated successfully!', severity: 'success' });
     } catch (error) {
@@ -55,7 +51,6 @@ function Profile() {
     }
   };
 
-  // ---------------- Password Change ----------------
   const handlePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setSnackbar({ open: true, message: 'Passwords do not match', severity: 'error' });
@@ -66,7 +61,6 @@ function Profile() {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       });
-
       setPasswordDialog(false);
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setSnackbar({ open: true, message: 'Password changed successfully!', severity: 'success' });
@@ -79,29 +73,23 @@ function Profile() {
     }
   };
 
-  // ---------------- Image Upload ----------------
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       setSnackbar({ open: true, message: 'Image size should be less than 5MB', severity: 'error' });
       return;
     }
-
     setImageUploading(true);
     try {
       const formData = new FormData();
       formData.append('image', file);
-
       const response = await api.post('/upload/profile-image', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const updatedUser = response.data.user;
-
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-
       setSnackbar({ open: true, message: 'Profile image updated successfully!', severity: 'success' });
     } catch (error) {
       setSnackbar({
@@ -118,10 +106,8 @@ function Profile() {
     try {
       const response = await api.put('/auth/profile', { ...editData, profileImage: null });
       const updatedUser = response.data.user;
-
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
-
       setSnackbar({ open: true, message: 'Profile image removed successfully!', severity: 'success' });
     } catch (error) {
       setSnackbar({
@@ -139,27 +125,19 @@ function Profile() {
       day: 'numeric'
     });
 
-  // Dummy stats
-  const stats = [
-    { label: 'Classes Enrolled', value: '6', color: '#568F87' },
-    { label: 'Assignments Due', value: '3', color: '#F5BABB' },
-    { label: 'Lost Items Posted', value: '1', color: '#E8989A' },
-    { label: 'Items Found', value: '2', color: '#7BA8A0' }
-  ];
-
   return (
-    <Box sx={{ maxWidth: 1000, mx: 'auto', p: 2 }}>
+    <Box sx={{ maxWidth: 1000, mx: 'auto', p: 2, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      
       {/* Profile Header */}
       <Paper
-        elevation={0}
+        elevation={3}
         sx={{
           p: 4,
           mb: 3,
           borderRadius: 3,
-          background: 'linear-gradient(135deg, #568F87 0%, #064232 100%)',
-          color: 'white',
+          backgroundColor: '#fff',
+          color: '#111',
           position: 'relative',
-          overflow: 'hidden'
         }}
       >
         <Grid container spacing={3} alignItems="center">
@@ -171,13 +149,13 @@ function Profile() {
                   width: 120,
                   height: 120,
                   fontSize: '2.5rem',
-                  border: '4px solid rgba(255,255,255,0.2)',
-                  background: user?.profileImage ? 'transparent' : 'linear-gradient(45deg, #F5BABB, #E8989A)'
+                  border: '2px solid #ddd',
+                  backgroundColor: '#eee'
                 }}
               >
-                {!user?.profileImage && <Person sx={{ fontSize: '3.5rem' }} />}
+                {!user?.profileImage && <Person sx={{ fontSize: '3.5rem', color: '#888' }} />}
               </Avatar>
-              <Box sx={{ position: 'absolute', bottom: -8, right: -8, display: 'flex', gap: 1 }}>
+              <Box sx={{ position: 'absolute', bottom: -5, right: -5, display: 'flex', gap: 1 }}>
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
@@ -186,12 +164,12 @@ function Profile() {
                   onChange={handleImageUpload}
                 />
                 <label htmlFor="profile-image-upload">
-                  <IconButton component="span" size="small" disabled={imageUploading}>
+                  <IconButton component="span" size="small" sx={{ bgcolor: '#000', color: '#fff' }}>
                     {imageUploading ? <CircularProgress size={16} /> : <PhotoCamera fontSize="small" />}
                   </IconButton>
                 </label>
                 {user?.profileImage && (
-                  <IconButton size="small" onClick={handleImageRemove}>
+                  <IconButton size="small" onClick={handleImageRemove} sx={{ bgcolor: '#000', color: '#fff' }}>
                     <Delete fontSize="small" />
                   </IconButton>
                 )}
@@ -202,13 +180,13 @@ function Profile() {
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
               {user?.name}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              <Chip icon={<Badge />} label={user?.studentId} />
-              <Chip icon={<School />} label={user?.role === 'admin' ? 'Administrator' : 'Student'} />
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Chip label={user?.studentId} sx={{ bgcolor: '#eee', color: '#111' }} />
+              <Chip label={user?.role === 'admin' ? 'Administrator' : 'Student'} sx={{ bgcolor: '#eee', color: '#111' }} />
             </Box>
           </Grid>
           <Grid item>
-            <IconButton onClick={handleEdit} color="inherit">
+            <IconButton onClick={handleEdit} color="primary">
               <Edit />
             </IconButton>
           </Grid>
@@ -218,14 +196,14 @@ function Profile() {
       <Grid container spacing={3}>
         {/* Personal Info */}
         <Grid item xs={12} md={8}>
-          <Card>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Personal Information
               </Typography>
-              <Grid container spacing={3}>
-                {['name', 'email', 'studentId'].map((field) => (
-                  <Grid item xs={12} sm={field === 'address' ? 12 : 6} key={field}>
+              <Grid container spacing={2}>
+                {['name', 'email', 'studentId', 'phone', 'department', 'year', 'address'].map((field) => (
+                  <Grid item xs={12} sm={6} key={field}>
                     <TextField
                       fullWidth
                       label={field.charAt(0).toUpperCase() + field.slice(1)}
@@ -233,6 +211,10 @@ function Profile() {
                       onChange={(e) => setEditData({ ...editData, [field]: e.target.value })}
                       disabled={!editing}
                       variant={editing ? 'outlined' : 'filled'}
+                      sx={{
+                        backgroundColor: editing ? '#fff' : '#f5f5f5',
+                        borderRadius: 1
+                      }}
                     />
                   </Grid>
                 ))}
@@ -254,7 +236,7 @@ function Profile() {
 
         {/* Account Details */}
         <Grid item xs={12} md={4}>
-          <Card sx={{ mb: 3 }}>
+          <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             <CardContent>
               <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                 Account Details
@@ -270,9 +252,6 @@ function Profile() {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Stats */}
-        
       </Grid>
 
       {/* Password Dialog */}

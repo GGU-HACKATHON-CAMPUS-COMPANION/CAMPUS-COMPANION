@@ -30,3 +30,36 @@ html, body, #root {
   width: 0px; /* Chrome, Edge, Safari */
   background: transparent;
 }
+
+/* FullCalendar toolbar container */
+.fc .fc-toolbar {
+  @apply flex justify-between items-center mb-4;
+}
+
+/* Toolbar buttons */
+.fc .fc-button {
+  @apply bg-black text-white font-medium px-3 py-1 rounded shadow;
+}
+
+/* Active button (e.g. when Week is selected) */
+.fc .fc-button-active {
+  @apply bg-gray-700 text-white;
+}
+
+/* Hover effect */
+.fc .fc-button:hover {
+  @apply bg-gray-800;
+}
+
+/* Default smaller size */
+.fc .fc-toolbar-title {
+  font-size: 1.1rem;   /* smaller than default */
+  font-weight: 600;    /* keep it readable */
+}
+
+/* On mobile make it even smaller */
+@media (max-width: 768px) {
+  .fc .fc-toolbar-title {
+    font-size: 0.9rem;
+  }
+}

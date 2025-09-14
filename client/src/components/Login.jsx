@@ -2,40 +2,43 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Paper, TextField, Button, Typography, Box, Alert, Tabs, Tab,
-  Avatar, InputAdornment, IconButton, Fade, Slide
+  InputAdornment, IconButton, Fade, Slide
 } from '@mui/material';
 import {
-  School, Email, Lock, Person, Badge, Visibility, VisibilityOff
+  Email, Lock, Person, Badge, Visibility, VisibilityOff
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
+// Floating animation keyframes
+const floatAnimation = (x, y, duration) => ({
+  animation: `float${x}${y} ${duration}s ease-in-out infinite alternate`,
+  '@keyframes': {
+    [`float${x}${y}`]: {
+      '0%': { transform: `translate(${x}px, ${y}px)` },
+      '100%': { transform: `translate(${x + (Math.random()*20-10)}px, ${y + (Math.random()*20-10)}px)` }
+    }
+  }
+});
+
 function Login() {
   const [tab, setTab] = useState(0);
-  const [formData, setFormData] = useState({
-    name: '', email: '', password: '', studentId: ''
-  });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', studentId: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login, register } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
-      if (tab === 0) {
-        await login(formData.email, formData.password);
-      } else {
-        await register(formData.name, formData.email, formData.password, formData.studentId);
-      }
-      navigate('/');
+      if (tab === 0) await login(formData.email, formData.password);
+      else await register(formData.name, formData.email, formData.password, formData.studentId);
+      navigate('/home');
     } catch (err) {
       setError(err.response?.data?.message || 'An error occurred');
     } finally {
@@ -43,100 +46,69 @@ function Login() {
     }
   };
 
-  // Glossy input style
-  const glossyInputStyle = {
+  const liquidInputStyle = {
     '& .MuiOutlinedInput-root': {
-      borderRadius: 2,
-      backgroundColor: 'rgba(255,255,255,0.15)',
-      backdropFilter: 'blur(10px)',
+      borderRadius: 8,
+      backgroundColor: 'rgba(255,255,255,0.05)',
       border: '1px solid rgba(255,255,255,0.3)',
+      color: '#fff',
+      '& input': { color: 'white', fontWeight: 500 },
       '& fieldset': { border: 'none' },
-      '&:hover': { backgroundColor: 'rgba(255,255,255,0.2)' },
-      '& input': { color: 'white', paddingTop: '20px' },
-      '& textarea': { color: 'white' },
+      '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
+      '&.Mui-focused': { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: '#fff' }
     },
-    '& .MuiInputLabel-root': {
-      color: 'rgba(255,255,255,0.8)',
-      marginBottom: '4px',
-      '&.Mui-focused': { color: 'white' },
-      '&.MuiFormLabel-filled': { color: 'white' }
-    },
-    mb: 2 // spacing between fields
+    mb: 1.5
   };
 
   return (
     <Box sx={{
-      minHeight: '100vh',
-      backgroundImage: 'url(/back-img.jpg)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      display: 'flex',
-      alignItems: 'center',
-      py: { xs: 2, sm: 4 },
-      position: 'relative',
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        top: 0, left: 0, right: 0, bottom: 0,
-        background: 'rgba(0,0,0,0.4)',
-        zIndex: 0
-      }
-    }}>
-      <Container maxWidth="sm" sx={{ position: 'relative', zIndex: 1 }}>
-        <Slide direction="up" in={true} mountOnEnter unmountOnExit>
-          <Paper elevation={24} sx={{
-            p: { xs: 2, sm: 3, md: 4 },
-            borderRadius: 3,
-            background: 'rgba(255,255,255,0.15)',
+      
+  minHeight: '100vh',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  position: 'relative',
+  overflow: 'hidden',
+  backgroundImage: `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://i.ytimg.com/vi/YRnxuoNX0Zs/maxresdefault.jpg?sqp=-oaymwEmCIAKENAF8quKqQMa8AEB-AH-CYAC0AWKAgwIABABGEYgZSg0MA8=&rs=AOn4CLB6q02xjs7AgtV516dLFUkrPOv41w')`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center 0%',
+  backgroundRepeat: 'no-repeat',
+  zIndex: 0
+}}>
+      {/* Animated Background Elements */}
+      
+
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 2 }}>
+        <Slide direction="up" in mountOnEnter unmountOnExit>
+          <Paper elevation={0} sx={{
+            p: 4,
+            borderRadius: 4,
+            backgroundColor: 'rgba(255,255,255,0.05)',
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255,255,255,0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            position: 'relative'
+            color: '#fff',
+            textAlign: 'center'
           }}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Avatar sx={{
-                width: 80, height: 80, mx: 'auto', mb: 2,
-                background: 'linear-gradient(45deg, #568F87, #064232)'
-              }}>
-                <School sx={{ fontSize: 40 }} />
-              </Avatar>
-              <Typography variant="h4" sx={{
-                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' },
-                fontWeight: 700,
-                background: 'linear-gradient(45deg, #568F87, #064232)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>
-                Campus Companion
-              </Typography>
-              <Typography variant="body1" color="white" sx={{ mt: 1 }}>
-                Your digital campus assistant
-              </Typography>
-            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>Campus Companion</Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
+              Your AI-powered campus assistant
+            </Typography>
 
             <Tabs
               value={tab}
               onChange={(e, newValue) => setTab(newValue)}
               centered
               sx={{
-                '& .MuiTabs-indicator': {
-                  background: 'linear-gradient(45deg, #568F87, #F5BABB)',
-                  height: 3,
-                  borderRadius: 2
-                },
-                '& .MuiTab-root': {
-                  color: 'white !important',
-                  '&.Mui-selected': { color: 'white !important' }
-                }
+                mb: 2,
+                '& .MuiTabs-indicator': { backgroundColor: '#fff' },
+                '& .MuiTab-root': { color: 'rgba(255,255,255,0.6)', fontWeight: 600, '&.Mui-selected': { color: '#fff' } }
               }}
             >
               <Tab label="Login" />
               <Tab label="Register" />
             </Tabs>
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+            <Box component="form" onSubmit={handleSubmit}>
               {error && (
                 <Fade in={!!error}>
                   <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
@@ -149,89 +121,46 @@ function Login() {
                 <Fade in={tab === 1}>
                   <Box>
                     <TextField
-                      fullWidth
-                      margin="normal"
-                      name="name"
-                      placeholder='Full Name'
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start"><Person color="primary" /></InputAdornment>,
-                      }}
-                      sx={glossyInputStyle}
+                      fullWidth placeholder="Full Name" name="name" value={formData.name} onChange={handleChange} required
+                      InputProps={{ startAdornment: <InputAdornment position="start"><Person sx={{ color: '#fff' }} /></InputAdornment> }}
+                      sx={liquidInputStyle}
                     />
                     <TextField
-                      fullWidth
-                      margin="normal"
-                      name="studentId"
-                      placeholder='Student ID'
-                      value={formData.studentId}
-                      onChange={handleChange}
-                      required
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start"><Badge color="primary" /></InputAdornment>,
-                      }}
-                      sx={glossyInputStyle}
+                      fullWidth placeholder="Student ID" name="studentId" value={formData.studentId} onChange={handleChange} required
+                      InputProps={{ startAdornment: <InputAdornment position="start"><Badge sx={{ color: '#fff' }} /></InputAdornment> }}
+                      sx={liquidInputStyle}
                     />
                   </Box>
                 </Fade>
               )}
 
               <TextField
-                fullWidth
-                margin="normal"
-                name="email"
-                type="email"
-                placeholder='Email Address'
-                value={formData.email}
-                onChange={handleChange}
-                required
-                InputProps={{
-                  startAdornment: <InputAdornment position="start"><Email color="primary" /></InputAdornment>,
-                }}
-                sx={glossyInputStyle}
+                fullWidth placeholder="Email Address" name="email" type="email" value={formData.email} onChange={handleChange} required
+                InputProps={{ startAdornment: <InputAdornment position="start"><Email sx={{ color: '#fff' }} /></InputAdornment> }}
+                sx={liquidInputStyle}
               />
 
               <TextField
-                fullWidth
-                margin="normal"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                placeholder='Password'
-                onChange={handleChange}
-                required
+                fullWidth placeholder="Password" name="password" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange} required
                 InputProps={{
-                  startAdornment: <InputAdornment position="start"><Lock color="primary" /></InputAdornment>,
+                  startAdornment: <InputAdornment position="start"><Lock sx={{ color: '#fff' }} /></InputAdornment>,
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#fff' }}>
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   )
                 }}
-                sx={glossyInputStyle}
+                sx={liquidInputStyle}
               />
 
               <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
+                type="submit" fullWidth variant="contained"
+                sx={{ mt: 3, py: 1.5, borderRadius: 2, backgroundColor: '#fff', color: '#000', fontWeight: 700, '&:hover': { backgroundColor: 'rgba(255,255,255,0.9)' } }}
                 disabled={loading}
-                sx={{
-                  mt: 4,
-                  py: 1.5,
-                  borderRadius: 2,
-                  background: 'linear-gradient(45deg, #568F87, #064232)',
-                  '&:hover': { background: 'linear-gradient(45deg, #064232, #568F87)' },
-                  fontWeight: 600,
-                  fontSize: '1.1rem'
-                }}
               >
-                {loading ? 'Processing...' : (tab === 0 ? 'Sign In' : 'Create Account')}
+                {loading ? 'Processing...' : tab === 0 ? 'Sign In' : 'Create Account'}
               </Button>
             </Box>
           </Paper>

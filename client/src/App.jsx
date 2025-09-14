@@ -1,11 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import LandingPage from './components/LandingPage';
+import { CircularProgress, Box } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Lazy load components for better performance
+const Login = lazy(() => import('./components/Login'));
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Home = lazy(() => import('./components/Home'));
+const Announcements = lazy(() => import('./components/Announcements'));
+const Timetable = lazy(() => import('./components/Timetable'));
+const PersonalTimetable = lazy(() => import('./components/PersonalTimetable'));
+const LostFound = lazy(() => import('./components/LostFound'));
+const Profile = lazy(() => import('./components/Profile'));
+const Settings = lazy(() => import('./components/Settings'));
+const ContactSupport = lazy(() => import('./components/ContactSupport'));
+const HelpCenter = lazy(() => import('./components/HelpCenter'));
+const OurMission = lazy(() => import('./components/OurMission'));
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./components/TermsOfService'));
 
 const theme = createTheme({
   palette: {
@@ -107,25 +121,85 @@ const theme = createTheme({
   },
 });
 
+// Loading component
+const LoadingFallback = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+    <CircularProgress />
+  </Box>
+);
+
 function ProtectedRoute({ children }) {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
 }
 
 function AppContent() {
-  const [showLanding, setShowLanding] = useState(true);
   const { user } = useAuth();
 
-  if (showLanding && !user) {
-    return <LandingPage onExplore={() => setShowLanding(false)} />;
-  }
+  
 
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={
+      <Route path="/" element={<Navigate to="/home" replace />} />
+      <Route path="/home" element={
         <ProtectedRoute>
-          <Dashboard />
+          <Dashboard><Home /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="/announcements" element={
+        <ProtectedRoute>
+          <Dashboard><Announcements /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="/schedule" element={
+        <ProtectedRoute>
+          <Dashboard><Timetable /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="/plans" element={
+        <ProtectedRoute>
+          <Dashboard><PersonalTimetable /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="/lost-found" element={
+        <ProtectedRoute>
+          <Dashboard><LostFound /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <Dashboard><Profile /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Dashboard><Settings /></Dashboard>
+        </ProtectedRoute>
+      } />
+      <Route path="contact-support" element={
+        <ProtectedRoute>
+          <ContactSupport/>
+        </ProtectedRoute>
+      } />
+      <Route path="help-center" element={
+        <ProtectedRoute>
+          <HelpCenter/>
+        </ProtectedRoute>
+      } />
+       <Route path="our-mission" element={
+        <ProtectedRoute>
+          <OurMission/>
+        </ProtectedRoute>
+      } />
+      <Route path="Privacy-Policy" element={
+        <ProtectedRoute>
+          <PrivacyPolicy/>
+        </ProtectedRoute>
+      } />
+      <Route path="terms-of-service" element={
+        <ProtectedRoute>
+          <TermsOfService/>
         </ProtectedRoute>
       } />
     </Routes>
