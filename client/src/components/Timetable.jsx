@@ -1,46 +1,97 @@
-import { useState, useEffect } from 'react';
-import {
-  Card, CardContent, Typography, Grid, Box, CircularProgress, Button,
-  Dialog, DialogTitle, DialogContent, TextField, DialogActions, FormControl,
-  InputLabel, Select, MenuItem, IconButton, Tooltip, Chip, Avatar, Fade
-} from '@mui/material';
-import {
-  Add, Delete, ArrowBack, Schedule, Class, School
-} from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import React, { useState, useEffect, useRef } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import { useAuth } from "../context/AuthContext";
+import api from "../services/api";
 
-const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const hours = Array.from({ length: 12 }, (_, i) => i + 8); // 8 AM – 8 PM
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 function Timetable() {
   const [classes, setClasses] = useState([]);
-  const [timings, setTimings] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] = useState(null);
   const [openClass, setOpenClass] = useState(false);
   const [openTiming, setOpenTiming] = useState(false);
-  const [classData, setClassData] = useState({ className: '', semester: 1 });
-  const [timingData, setTimingData] = useState({ subject: '', day: 'Monday', startTime: '', endTime: '', instructor: '' });
-  const { user } = useAuth();
+  const [selectedClass, setSelectedClass] = useState(null);
+  const [classData, setClassData] = useState({ className: "", semester: 1 });
+  const [timingData, setTimingData] = useState({
+    subject: "",
+    date: "",
+    startTime: "",
+    endTime: "",
+    instructor: "",
+  });
 
-  useEffect(() => { fetchClasses(); }, []);
+  const { user } = useAuth();
+  const calendarRef = useRef(null);
+
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
   const fetchClasses = async () => {
-    try { 
-      const res = await api.get('/classes'); 
-      setClasses(res.data); 
-    } catch (err) { 
-      console.error(err); 
-    } finally { 
-      setLoading(false); 
+    try {
+      const res = await api.get("/timetables/classes");
+      setClasses(res.data);
+      if (res.data.length > 0) {
+        setSelectedClass(res.data[0]);
+        fetchTimings(res.data[0]._id, res.data[0].className);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const fetchTimings = async (classId) => {
+  const fetchTimings = async (classId, className) => {
     try {
-      const res = await api.get(`/classes/${classId}/timings`);
-      setTimings(res.data);
+      const res = await api.get(`/timetables/classes/${classId}/timings`);
+      const mappedEvents = res.data.map((t) => {
+        const startTime =
+          t.startTime.includes(":")
+            ? t.startTime.length === 5
+              ? `${t.startTime}:00`
+              : t.startTime
+            : `${t.startTime}:00:00`;
+        const endTime =
+          t.endTime.includes(":")
+            ? t.endTime.length === 5
+              ? `${t.endTime}:00`
+              : t.endTime
+            : `${t.endTime}:00:00`;
+        return {
+          id: t._id,
+          title: `${t.subject} — ${t.instructor}`,
+          start: `${t.date}T${startTime}`,
+          end: `${t.date}T${endTime}`,
+          backgroundColor: t.subject === "PYTHON" ? "#3788d8" : t.subject === "JAVA(OOPS)" ? "#ca4756" : "#ff5722",
+          borderColor: t.subject === "PYTHON" ? "#3788d8" : t.subject === "JAVA(OOPS)" ? "#ca4756" : "#ff5722",
+
+          textColor: "#fff",
+          extendedProps: {
+            subject: t.subject,
+            instructor: t.instructor,
+            className,
+          },
+        };
+      });
+      setEvents(mappedEvents);
     } catch (err) {
       console.error(err);
     }
@@ -48,279 +99,305 @@ function Timetable() {
 
   const handleCreateClass = async (e) => {
     e.preventDefault();
-    try { 
-      await api.post('/classes', classData); 
-      setOpenClass(false); 
-      setClassData({ className: '', semester: 1 }); 
-      fetchClasses(); 
-    } catch (err) { 
-      alert('Error creating class'); 
+    try {
+      await api.post("/timetables/classes", classData);
+      setOpenClass(false);
+      setClassData({ className: "", semester: 1 });
+      fetchClasses();
+    } catch (err) {
+      alert("Error creating class");
     }
   };
 
   const handleAddTiming = async (e) => {
     e.preventDefault();
-    try { 
-      await api.post(`/classes/${selectedClass._id}/timings`, timingData);
-      setOpenTiming(false); 
-      setTimingData({ subject: '', day: 'Monday', startTime: '', endTime: '', instructor: '' }); 
-      fetchTimings(selectedClass._id); 
-    } catch (err) { 
-      alert('Error adding timing'); 
+    try {
+      const dateObj = new Date(timingData.date);
+      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
+      const timingPayload = { ...timingData, day: dayName };
+      await api.post(
+        `/timetables/classes/${selectedClass._id}/timings`,
+        timingPayload
+      );
+
+      setOpenTiming(false);
+      setTimingData({
+        subject: "",
+        date: "",
+        startTime: "",
+        endTime: "",
+        instructor: "",
+      });
+      fetchTimings(selectedClass._id, selectedClass.className);
+
+      if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        calendarApi.gotoDate(timingData.date);
+        calendarApi.changeView("timeGridDay");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error adding timing");
     }
   };
 
-  const handleDeleteTiming = async (timingId) => {
-    if (!window.confirm('Delete this timing?')) return;
-    try { 
-      await api.delete(`/classes/timings/${timingId}`); 
-      fetchTimings(selectedClass._id); 
-    } catch (err) { 
-      console.error(err); 
+  const handleDeleteTiming = async (id) => {
+    if (!window.confirm("Delete this timing?")) return;
+    try {
+      await api.delete(`/timetables/timings/${id}`);
+      fetchTimings(selectedClass._id, selectedClass.className);
+    } catch (err) {
+      console.error(err);
     }
   };
 
-  const handleClassClick = (classItem) => { 
-    setSelectedClass(classItem); 
-    fetchTimings(classItem._id); 
-  };
-
-  const getTopOffset = (time) => { 
-    const [h, m] = time.split(':').map(Number); 
-    return ((h - 8) * 50 + (m / 60) * 50); 
-  };
-
-  const getHeight = (start, end) => { 
-    const [h1, m1] = start.split(':').map(Number); 
-    const [h2, m2] = end.split(':').map(Number); 
-    return ((h2*60+m2)-(h1*60+m1))*(50/60); 
-  };
-  
-  const getSubjectColor = (subject) => {
-    const colors = ['#568F87', '#F5BABB', '#E8989A', '#064232', '#7BA8A0', '#F8D0D1', '#D67B7D', '#568F87'];
-    const hash = subject.split('').reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a; }, 0);
-    return colors[Math.abs(hash) % colors.length];
-  };
-
-  if (loading) return <Box display="flex" justifyContent="center" mt={5}><CircularProgress /></Box>;
-
-  if (selectedClass) {
+  if (loading) {
     return (
-      <Box>
-        <Box mb={4}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Button 
-                startIcon={<ArrowBack />} 
-                onClick={() => setSelectedClass(null)}
-                sx={{ borderRadius: 2 }}
-              >
-                Back to Classes
-              </Button>
-              <Box>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                  {selectedClass.className}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Semester {selectedClass.semester} Timetable
-                </Typography>
-              </Box>
-            </Box>
-            {user?.role === 'admin' && (
-              <Button 
-                variant="contained" 
-                startIcon={<Add />} 
-                onClick={() => setOpenTiming(true)}
-                sx={{
-                  borderRadius: 2,
-                  background: 'linear-gradient(45deg, #2563eb, #1d4ed8)'
-                }}
-              >
-                Add Class
-              </Button>
-            )}
-          </Box>
-        </Box>
-
-        {/* Timetable Grid */}
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box display="grid" gridTemplateColumns="50px repeat(7, 1fr)" minWidth={700} border="1px solid #ccc">
-            {/* Time Column */}
-            <Box borderRight="1px solid #ccc">
-              {hours.map(h => (
-                <Box key={h} height={50} borderBottom="1px solid #eee" display="flex" alignItems="center" justifyContent="center" fontSize={{ xs: 10, sm: 12 }}>
-                  {h <= 12 ? `${h} AM` : `${h-12} PM`}
-                </Box>
-              ))}
-            </Box>
-
-            {/* Day Columns */}
-            {days.map(day => (
-              <Box key={day} borderRight="1px solid #ccc" position="relative">
-                <Box textAlign="center" fontWeight="bold" borderBottom="1px solid #ccc" p={0.5} fontSize={{ xs: 11, sm: 13 }}>{day}</Box>
-                {hours.map((_, idx) => <Box key={idx} height={50} borderBottom="1px solid #eee" />)}
-
-                {/* Timing blocks */}
-                {timings.filter(t => t.day === day).map(t => (
-                  <Tooltip 
-                    key={t._id}
-                    title={
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                          {t.subject}
-                        </Typography>
-                        <Typography variant="body2">📍 {t.instructor}</Typography>
-                        <Typography variant="body2">⏰ {t.startTime} - {t.endTime}</Typography>
-                      </Box>
-                    }
-                    arrow
-                    placement="top"
-                  >
-                    <Box 
-                      position="absolute" 
-                      left={2} 
-                      right={2} 
-                      top={getTopOffset(t.startTime)} 
-                      height={getHeight(t.startTime, t.endTime)}
-                      sx={{
-                        background: `linear-gradient(135deg, ${getSubjectColor(t.subject)}, ${getSubjectColor(t.subject)}dd)`,
-                        color: 'white',
-                        borderRadius: 2,
-                        px: 1,
-                        py: 0.5,
-                        fontSize: { xs: 10, sm: 12 },
-                        overflow: 'hidden',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        '&:hover': {
-                          transform: 'scale(1.02)',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-                        }
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ fontWeight: 700, display: 'block' }}>{t.subject}</Typography>
-                      <Typography variant="caption" sx={{ opacity: 0.9, display: 'block' }}>{t.startTime}-{t.endTime}</Typography>
-                      <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>{t.instructor}</Typography>
-                      {user?.role === 'admin' && (
-                        <IconButton 
-                          size="small" 
-                          sx={{ color: 'white', p: 0, mt: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }} 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteTiming(t._id); }}
-                        >
-                          <Delete fontSize="small"/>
-                        </IconButton>
-                      )}
-                    </Box>
-                  </Tooltip>
-                ))}
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        {/* Add Timing Modal */}
-        <Dialog open={openTiming} onClose={() => setOpenTiming(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Add Timing for {selectedClass.className}</DialogTitle>
-          <DialogContent>
-            <Box component="form" onSubmit={handleAddTiming} sx={{ mt: 1 }}>
-              <TextField fullWidth margin="normal" label="Subject" required value={timingData.subject} onChange={e => setTimingData({...timingData, subject: e.target.value})} />
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Day</InputLabel>
-                <Select value={timingData.day} onChange={e => setTimingData({...timingData, day: e.target.value})}>
-                  {days.map(d => <MenuItem key={d} value={d}>{d}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <TextField fullWidth margin="normal" label="Start Time (HH:MM)" required value={timingData.startTime} onChange={e => setTimingData({...timingData, startTime: e.target.value})} />
-              <TextField fullWidth margin="normal" label="End Time (HH:MM)" required value={timingData.endTime} onChange={e => setTimingData({...timingData, endTime: e.target.value})} />
-              <TextField fullWidth margin="normal" label="Instructor" required value={timingData.instructor} onChange={e => setTimingData({...timingData, instructor: e.target.value})} />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenTiming(false)}>Cancel</Button>
-            <Button onClick={handleAddTiming} variant="contained">Add</Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+      <div className="flex justify-center mt-5">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
     );
   }
 
-  // Class list view
+  // Detect if mobile
+  const isMobile = window.innerWidth < 768;
+
+  // Custom MUI theme
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: "#000000",
+        contrastText: "#ffffff",
+      },
+    },
+  });
+
   return (
-    <Box>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>Class Timetables</Typography>
-          <Typography variant="body2" color="text.secondary">Select a class to view its schedule</Typography>
-        </Box>
-        {user?.role === 'admin' && (
-          <Button 
-            variant="contained" 
-            startIcon={<Add />} 
-            onClick={() => setOpenClass(true)}
-            sx={{ borderRadius: 2, background: 'linear-gradient(45deg, #2563eb, #1d4ed8)' }}
-          >
-            Add Class
-          </Button>
-        )}
-      </Box>
-
-      <Grid container spacing={{ xs: 2, sm: 3 }}>
-        {classes.map((classItem, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={classItem._id}>
-            <Fade in={true} timeout={300 + index * 100}>
-              <Card 
-                sx={{ cursor: 'pointer', borderRadius: 3, transition: 'all 0.3s ease', '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 25px rgba(0,0,0,0.15)' } }}
-                onClick={() => handleClassClick(classItem)}
+    <ThemeProvider theme={theme}>
+      <div className="p-4 max-w-full">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">My Timetable</h2>
+            {selectedClass && (
+              <p className="text-gray-600">
+                {selectedClass.className} (Semester {selectedClass.semester})
+              </p>
+            )}
+          </div>
+          {user?.role === "admin" && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="contained"
+                sx={{ backgroundColor: "black", "&:hover": { bgColor: "#333" } }}
+                onClick={() => setOpenClass(true)}
               >
-                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                  <Box display="flex" alignItems="center" gap={2} mb={2}>
-                    <Avatar sx={{ background: 'linear-gradient(45deg, #2563eb, #1d4ed8)' }}>
-                      <Class />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>{classItem.className}</Typography>
-                      <Chip label={`Semester ${classItem.semester}`} size="small" sx={{ bgcolor: 'primary.light', color: 'primary.contrastText', fontWeight: 600 }} />
-                    </Box>
-                  </Box>
-                  <Box display="flex" alignItems="center" gap={1} color="text.secondary">
-                    <Schedule sx={{ fontSize: 16 }} />
-                    <Typography variant="body2">Click to view timetable</Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Fade>
-          </Grid>
-        ))}
-      </Grid>
+                Add Class
+              </Button>
+              <Button
+                variant="contained"
+                sx={{ backgroundColor: "black", "&:hover": { bgColor: "#333" } }}
+                onClick={() => setOpenTiming(true)}
+                disabled={!selectedClass}
+              >
+                Add Timing
+              </Button>
+            </div>
+          )}
+        </div>
 
-      {classes.length === 0 && (
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" py={8}>
-          <School sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>No classes available</Typography>
-          <Typography variant="body2" color="text.disabled">Add a class to get started with timetables</Typography>
-        </Box>
-      )}
+        {/* Class Selector */}
+        <div className="mb-4 w-full max-w-sm">
+          <FormControl fullWidth>
+            <InputLabel>Select Class</InputLabel>
+            <Select
+              value={selectedClass?._id || ""}
+              onChange={(e) => {
+                const cls = classes.find((c) => c._id === e.target.value);
+                setSelectedClass(cls);
+                fetchTimings(cls._id, cls.className);
+              }}
+            >
+              {classes.map((cls) => (
+                <MenuItem key={cls._id} value={cls._id}>
+                  {cls.className} (Sem {cls.semester})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
 
-      {/* Add Class Modal */}
-      <Dialog open={openClass} onClose={() => setOpenClass(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add Class</DialogTitle>
-        <DialogContent>
-          <Box component="form" onSubmit={handleCreateClass} sx={{ mt: 1 }}>
-            <TextField fullWidth margin="normal" label="Class Name" required value={classData.className} onChange={e => setClassData({...classData, className: e.target.value})} />
-            <FormControl fullWidth margin="normal">
-              <InputLabel>Semester</InputLabel>
-              <Select value={classData.semester} onChange={e => setClassData({...classData, semester: e.target.value})}>
-                {[1,2,3,4,5,6,7,8].map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenClass(false)}>Cancel</Button>
-          <Button onClick={handleCreateClass} variant="contained">Add</Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {/* Calendar */}
+        <div className="w-full overflow-x-auto">
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            initialView={isMobile ? "timeGridDay" : "timeGridWeek"}
+            headerToolbar={
+              isMobile
+                ? {
+                    left: "prev,next",
+                    center: "title",
+                    right: "", // remove view buttons on mobile
+                  }
+                : {
+                    left: "prev,next today",
+                    center: "title",
+                    right: "dayGridMonth,timeGridWeek,timeGridDay",
+                  }
+            }
+            allDaySlot={false}
+            slotMinTime="08:00:00"
+            slotMaxTime="20:00:00"
+            nowIndicator={true}
+            events={events}
+            height="auto"
+            firstDay={1}
+            slotDuration="01:00:00"
+            weekends={true}
+            eventDisplay="block"
+            displayEventTime={true}
+            forceEventDuration={true}
+            eventTimeFormat={{
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: false,
+            }}
+            dayHeaderFormat={{ weekday: "short" }}
+            eventClick={(info) => {
+              if (user?.role === "admin") handleDeleteTiming(info.event.id);
+            }}
+            windowResize={(arg) => {
+              if (window.innerWidth < 768) {
+                arg.view.calendar.changeView("timeGridDay");
+              } else {
+                arg.view.calendar.changeView("timeGridWeek");
+              }
+            }}
+            // Custom styles for mobile title
+            dayHeaderClassNames="text-sm sm:text-base"
+          />
+        </div>
+
+        {/* Add Class Dialog */}
+        <Dialog
+          open={openClass}
+          onClose={() => setOpenClass(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Add Class</DialogTitle>
+          <DialogContent>
+            <form onSubmit={handleCreateClass} className="space-y-3 mt-2">
+              <TextField
+                fullWidth
+                label="Class Name"
+                required
+                value={classData.className}
+                onChange={(e) =>
+                  setClassData({ ...classData, className: e.target.value })
+                }
+              />
+              <FormControl fullWidth>
+                <InputLabel>Semester</InputLabel>
+                <Select
+                  value={classData.semester}
+                  onChange={(e) =>
+                    setClassData({ ...classData, semester: e.target.value })
+                  }
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                    <MenuItem key={s} value={s}>
+                      {s}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </form>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenClass(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleCreateClass}>
+              Add
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Add Timing Dialog */}
+        <Dialog
+          open={openTiming}
+          onClose={() => setOpenTiming(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Add Class Timing</DialogTitle>
+          <DialogContent>
+            <form onSubmit={handleAddTiming} className="space-y-3 mt-2">
+              <TextField
+                fullWidth
+                label="Subject"
+                required
+                value={timingData.subject}
+                onChange={(e) =>
+                  setTimingData({ ...timingData, subject: e.target.value })
+                }
+              />
+              <TextField
+                fullWidth
+                label="Date"
+                type="date"
+                required
+                value={timingData.date}
+                onChange={(e) =>
+                  setTimingData({ ...timingData, date: e.target.value })
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                fullWidth
+                label="Start Time"
+                type="time"
+                required
+                value={timingData.startTime}
+                onChange={(e) =>
+                  setTimingData({ ...timingData, startTime: e.target.value })
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                fullWidth
+                label="End Time"
+                type="time"
+                required
+                value={timingData.endTime}
+                onChange={(e) =>
+                  setTimingData({ ...timingData, endTime: e.target.value })
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                fullWidth
+                label="Instructor"
+                required
+                value={timingData.instructor}
+                onChange={(e) =>
+                  setTimingData({
+                    ...timingData,
+                    instructor: e.target.value,
+                  })
+                }
+              />
+            </form>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenTiming(false)}>Cancel</Button>
+            <Button variant="contained" onClick={handleAddTiming}>
+              Add Timing
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+    </ThemeProvider>
   );
 }
 

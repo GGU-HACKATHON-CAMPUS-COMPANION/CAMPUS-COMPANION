@@ -16,6 +16,10 @@ const classTimingSchema = new mongoose.Schema({
     required: true,
     enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
   },
+  date: {
+    type: String,
+    required: true
+  },
   startTime: {
     type: String,
     required: true

@@ -6,8 +6,8 @@ import {
   Avatar, Fade, Paper, Tooltip, CardMedia
 } from '@mui/material';
 import {
-  Add, Delete, Edit, Search, LocationOn, Phone, Person, AccessTime,
-  Smartphone, MenuBook, Checkroom, Watch, Description, Category, PhotoCamera, Image
+  Add, Delete, Edit, Search, LocationOn, Phone, AccessTime,
+  Smartphone, MenuBook, Checkroom, Watch, Description, Category, PhotoCamera
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -29,24 +29,24 @@ function LostFound() {
   useEffect(() => {
     fetchItems();
   }, []);
-  
+
   useEffect(() => {
-    let filtered = items.filter(item => 
+    let filtered = items.filter(item =>
       tab === 0 ? item.type === 'lost' : item.type === 'found'
     );
-    
+
     if (searchTerm) {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.location.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     if (categoryFilter !== 'all') {
       filtered = filtered.filter(item => item.category === categoryFilter);
     }
-    
+
     setFilteredItems(filtered);
   }, [items, tab, searchTerm, categoryFilter]);
 
@@ -65,16 +65,13 @@ function LostFound() {
     e.preventDefault();
     try {
       const submitData = new FormData();
-      submitData.append('type', formData.type);
-      submitData.append('title', formData.title);
-      submitData.append('description', formData.description);
-      submitData.append('category', formData.category);
-      submitData.append('location', formData.location);
-      submitData.append('contactInfo', formData.contactInfo);
-      
-      if (formData.imageFile) {
-        submitData.append('image', formData.imageFile);
-      }
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key === "imageFile" && value) {
+          submitData.append("image", value);
+        } else if (key !== "imageFile") {
+          submitData.append(key, value);
+        }
+      });
 
       if (editingItem) {
         await api.put(`/lostfound/${editingItem._id}`, submitData, {
@@ -115,12 +112,10 @@ function LostFound() {
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       alert('Image size should be less than 5MB');
       return;
     }
-
     const imageUrl = URL.createObjectURL(file);
     setFormData({ ...formData, image: imageUrl, imageFile: file });
   };
@@ -152,7 +147,7 @@ function LostFound() {
       default: return 'default';
     }
   };
-  
+
   const getCategoryIcon = (category) => {
     switch (category) {
       case 'electronics': return <Smartphone />;
@@ -163,15 +158,15 @@ function LostFound() {
       default: return <Category />;
     }
   };
-  
+
   const getCategoryColor = (category) => {
     const colors = {
-      electronics: '#568F87',
-      books: '#F5BABB',
-      clothing: '#E8989A',
-      accessories: '#064232',
-      documents: '#568F87',
-      other: '#064232'
+      electronics: '#3b82f6',
+      books: '#f59e0b',
+      clothing: '#ec4899',
+      accessories: '#10b981',
+      documents: '#6366f1',
+      other: '#6b7280'
     };
     return colors[category] || colors.other;
   };
@@ -179,32 +174,19 @@ function LostFound() {
   if (loading) return <Box display="flex" justifyContent="center"><CircularProgress /></Box>;
 
   return (
-    <Box sx={{ position: 'relative', pb: 10 }}>
+    <Box sx={{ position: 'relative', pb: 10, px: { xs: 2, sm: 4 } }}>
+      {/* Header */}
       <Box mb={4}>
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-              Lost & Found
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Help reunite lost items with their owners
-            </Typography>
-          </Box>
-          <Button 
-            variant="contained" 
-            startIcon={<Add />} 
-            onClick={() => setOpen(true)}
-            sx={{
-              borderRadius: 2,
-              background: 'linear-gradient(45deg, #2563eb, #1d4ed8)'
-            }}
-          >
-            Add Item
-          </Button>
-        </Box>
-        
-        <Paper sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 }, borderRadius: 3 }}>
-          <Grid container spacing={3} alignItems="center">
+        <Typography variant="h5" fontWeight={700} gutterBottom>
+          Lost & Found
+        </Typography>
+        <Typography variant="body2" color="text.secondary" mb={3}>
+          Help reunite lost items with their owners
+        </Typography>
+
+        {/* Filters */}
+        <Paper sx={{ p: 2, borderRadius: 3, mb: 3 }}>
+          <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 fullWidth
@@ -239,9 +221,10 @@ function LostFound() {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Tabs 
-                value={tab} 
+              <Tabs
+                value={tab}
                 onChange={(e, newValue) => setTab(newValue)}
+                centered
                 sx={{
                   '& .MuiTabs-indicator': {
                     background: 'linear-gradient(45deg, #2563eb, #f59e0b)',
@@ -250,118 +233,75 @@ function LostFound() {
                   }
                 }}
               >
-                <Tab label="Lost Items" sx={{ fontWeight: 600 }} />
-                <Tab label="Found Items" sx={{ fontWeight: 600 }} />
+                <Tab label="Lost" sx={{ fontWeight: 600 }} />
+                <Tab label="Found" sx={{ fontWeight: 600 }} />
               </Tabs>
             </Grid>
           </Grid>
         </Paper>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 3 }}>
+      {/* Items */}
+      <Grid container spacing={3}>
         {filteredItems.map((item, index) => (
-          <Grid item xs={12} sm={6} md={6} lg={4} key={item._id}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item._id}>
             <Fade in={true} timeout={300 + index * 100}>
-              <Card sx={{ 
-                height: '100%',
-                borderRadius: 3,
-                overflow: 'hidden',
-                border: `2px solid ${item.type === 'lost' ? '#ef444420' : '#10b98120'}`,
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
-                }
-              }}>
+              <Card
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  border: `1px solid ${item.type === 'lost' ? '#ef444420' : '#10b98120'}`,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  '&:hover': { boxShadow: '0 6px 20px rgba(0,0,0,0.15)' }
+                }}
+              >
                 {item.image && (
                   <CardMedia
                     component="img"
-                    height="200"
+                    height="180"
                     image={item.image}
                     alt={item.title}
                     sx={{ objectFit: 'cover' }}
                   />
                 )}
-                <Box 
-                  sx={{ 
-                    height: 4, 
-                    background: item.type === 'lost' 
-                      ? 'linear-gradient(90deg, #ef4444, #dc2626)' 
-                      : 'linear-gradient(90deg, #10b981, #059669)'
-                  }} 
-                />
-                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                   <Box display="flex" alignItems="center" gap={2} mb={2}>
-                    <Avatar 
-                      sx={{ 
-                        bgcolor: getCategoryColor(item.category),
-                        width: { xs: 32, sm: 40 },
-                        height: { xs: 32, sm: 40 }
-                      }}
-                    >
+                    <Avatar sx={{ bgcolor: getCategoryColor(item.category) }}>
                       {getCategoryIcon(item.category)}
                     </Avatar>
                     <Box flex={1}>
-                      <Typography variant="h6" sx={{ 
-                        fontWeight: 600, 
-                        mb: 0.5,
-                        fontSize: { xs: '1rem', sm: '1.25rem' }
-                      }}>
+                      <Typography variant="h6" fontWeight={600}>
                         {item.title}
                       </Typography>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Chip 
+                      <Box display="flex" gap={1} flexWrap="wrap">
+                        <Chip
                           label={item.type}
                           size="small"
-                          sx={{ 
-                            bgcolor: item.type === 'lost' ? '#ef444420' : '#10b98120',
+                          sx={{
+                            bgcolor: item.type === 'lost' ? '#fee2e2' : '#d1fae5',
                             color: item.type === 'lost' ? '#ef4444' : '#10b981',
-                            fontWeight: 600,
-                            textTransform: 'capitalize'
+                            fontWeight: 600
                           }}
                         />
-                        <Chip 
-                          label={item.status} 
+                        <Chip
+                          label={item.status}
                           color={getStatusColor(item.status)}
                           size="small"
-                          sx={{ fontWeight: 600, textTransform: 'capitalize' }}
+                          sx={{ fontWeight: 600 }}
                         />
                       </Box>
                     </Box>
-                    <Box display="flex" gap={1}>
-                      {user?.role === 'admin' && (
-                        <Tooltip title="Edit item">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleEdit(item)} 
-                            color="primary"
-                            sx={{ '&:hover': { bgcolor: 'rgba(37, 99, 235, 0.1)' } }}
-                          >
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      {(user?.role === 'admin' || item.userId?._id === user?.id) && (
-                        <Tooltip title="Delete item">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleDelete(item._id)} 
-                            color="error"
-                            sx={{ '&:hover': { bgcolor: '#ef444420' } }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Box>
                   </Box>
-                  
-                  <Typography 
-                    variant="body2" 
-                    sx={{ mb: 2, lineHeight: 1.6, color: 'text.secondary' }}
-                  >
+
+                  <Typography variant="body2" color="text.secondary" mb={2}>
                     {item.description}
                   </Typography>
-                  
+
+                  <Box flex={1} />
+
                   <Box display="flex" flexDirection="column" gap={1} mb={2}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LocationOn sx={{ fontSize: 16, color: 'text.disabled' }} />
@@ -376,14 +316,9 @@ function LostFound() {
                       </Typography>
                     </Box>
                   </Box>
-                  
+
                   <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="caption" sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 0.5,
-                      color: 'text.secondary'
-                    }}>
+                    <Typography variant="caption" color="text.secondary" display="flex" alignItems="center" gap={0.5}>
                       <AccessTime sx={{ fontSize: 14 }} />
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
@@ -391,38 +326,39 @@ function LostFound() {
                         year: 'numeric'
                       })}
                     </Typography>
-                    <Typography variant="caption" sx={{ 
-                      fontWeight: 600,
-                      color: 'primary.main'
-                    }}>
+                    <Typography variant="caption" fontWeight={600} color="primary.main">
                       By {item.userId?.name}
                     </Typography>
                   </Box>
-                  
-                  {(user?.role === 'admin' || item.userId?._id === user?.id) && item.status === 'active' && (
-                    <Button 
-                      size="small" 
-                      variant="contained"
-                      sx={{ 
-                        mt: 2,
-                        borderRadius: 2,
-                        background: 'linear-gradient(45deg, #10b981, #059669)',
-                        '&:hover': {
-                          background: 'linear-gradient(45deg, #059669, #047857)',
-                        }
-                      }}
-                      onClick={() => handleStatusUpdate(item._id, 'resolved')}
-                    >
-                      Mark as Resolved
-                    </Button>
+
+                  {/* Edit/Delete buttons for owner and admin */}
+                  {(user?._id === item.userId?._id || user?.role === 'admin') && (
+                    <Box display="flex" gap={1} mt={2}>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleEdit(item)}
+                        sx={{ color: 'primary.main' }}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(item._id)}
+                        sx={{ color: 'error.main' }}
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Box>
                   )}
+
+                  
                 </CardContent>
               </Card>
             </Fade>
           </Grid>
         ))}
       </Grid>
-      
+
       {/* Floating Action Button */}
       <Tooltip title="Post new item">
         <Fab
@@ -430,19 +366,18 @@ function LostFound() {
           onClick={() => setOpen(true)}
           sx={{
             position: 'fixed',
-            bottom: { xs: 80, sm: 24 },
-            left: { xs: 16, sm: 24 },
-            background: 'linear-gradient(45deg, #2563eb, #1d4ed8)',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #1d4ed8, #1e40af)',
-            },
-            boxShadow: '0 8px 25px rgba(86, 143, 135, 0.3)'
+            bottom: 104,
+            right: 24,
+            background: 'black',
+            '&:hover': { background: 'grey' },
+            zIndex: 2000
           }}
         >
           <Add />
         </Fab>
       </Tooltip>
 
+      {/* Dialog */}
       <Dialog open={open} onClose={() => { setOpen(false); setEditingItem(null); }} maxWidth="sm" fullWidth>
         <DialogTitle>{editingItem ? 'Edit Item' : 'Post Lost/Found Item'}</DialogTitle>
         <DialogContent>
@@ -451,7 +386,7 @@ function LostFound() {
               <InputLabel>Type</InputLabel>
               <Select
                 value={formData.type}
-                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
                 <MenuItem value="lost">Lost</MenuItem>
                 <MenuItem value="found">Found</MenuItem>
@@ -460,18 +395,18 @@ function LostFound() {
             <TextField
               fullWidth margin="normal" label="Title" required
               value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
             <TextField
               fullWidth margin="normal" label="Description" multiline rows={3} required
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             />
             <FormControl fullWidth margin="normal">
               <InputLabel>Category</InputLabel>
               <Select
                 value={formData.category}
-                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 required
               >
                 <MenuItem value="electronics">Electronics</MenuItem>
@@ -485,20 +420,20 @@ function LostFound() {
             <TextField
               fullWidth margin="normal" label="Location" required
               value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
             />
             <TextField
               fullWidth margin="normal" label="Contact Info" required
               value={formData.contactInfo}
-              onChange={(e) => setFormData({...formData, contactInfo: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
             />
-            
+
             {/* Image Upload */}
-            <Box sx={{ mt: 2, mb: 1 }}>
+            <Box sx={{ mt: 2 }}>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Item Image (Optional)
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box display="flex" alignItems="center" gap={2}>
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
@@ -507,12 +442,7 @@ function LostFound() {
                   onChange={handleImageUpload}
                 />
                 <label htmlFor="item-image-upload">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    startIcon={<PhotoCamera />}
-                    sx={{ borderRadius: 2 }}
-                  >
+                  <Button variant="outlined" component="span" startIcon={<PhotoCamera />} sx={{ borderRadius: 2 }}>
                     Upload Image
                   </Button>
                 </label>
@@ -533,12 +463,7 @@ function LostFound() {
                   <img
                     src={formData.image}
                     alt="Preview"
-                    style={{
-                      width: '100%',
-                      maxHeight: 200,
-                      objectFit: 'cover',
-                      borderRadius: 8
-                    }}
+                    style={{ width: '100%', maxHeight: 200, objectFit: 'cover', borderRadius: 8 }}
                   />
                 </Box>
               )}
@@ -546,13 +471,7 @@ function LostFound() {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { 
-            setOpen(false); 
-            setEditingItem(null);
-            setFormData({
-              type: 'lost', title: '', description: '', category: '', location: '', contactInfo: '', image: '', imageFile: null
-            });
-          }}>Cancel</Button>
+          <Button onClick={() => { setOpen(false); setEditingItem(null); }}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained">{editingItem ? 'Update' : 'Post'}</Button>
         </DialogActions>
       </Dialog>

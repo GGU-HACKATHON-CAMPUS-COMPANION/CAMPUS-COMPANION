@@ -30,6 +30,7 @@ const announcementValidation = [
   body('content').trim().isLength({ min: 10, max: 1000 }).withMessage('Content must be 10-1000 characters'),
   body('category').optional().isIn(['academic', 'event', 'general', 'urgent']).withMessage('Invalid category'),
   body('priority').optional().isIn(['low', 'medium', 'high']).withMessage('Invalid priority'),
+  body('image').optional({ nullable: true, checkFalsy: true }),
   handleValidationErrors
 ];
 

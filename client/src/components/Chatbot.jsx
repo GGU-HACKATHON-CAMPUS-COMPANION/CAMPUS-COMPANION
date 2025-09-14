@@ -81,25 +81,61 @@ const Chatbot = () => {
 
   return (
     <>
-      <Tooltip title="Chat with Campus Assistant" placement="right">
-        <Fab
-          color="primary"
-          onClick={() => setOpen(true)}
-          sx={{
-            position: 'fixed',
-            bottom: { xs: 16, sm: 24 },
-            right: { xs: 16, sm: 24 },
-            background: 'linear-gradient(45deg, #568F87, #F5BABB)',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #F5BABB, #568F87)',
-              transform: 'scale(1.1)'
-            },
-            boxShadow: '0 8px 25px rgba(86, 143, 135, 0.4)',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          <BotIcon sx={{ fontSize: 28 }} />
-        </Fab>
+      <Tooltip title="Chat with Campus Assist" placement="right">
+        <Box
+  onClick={() => setOpen(true)}
+  sx={{
+    position: "fixed",
+    bottom: { xs: 16, sm: 24 },
+    right: { xs: 16, sm: 24 },
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      transform: "scale(1.1)",
+    },
+  }}
+>
+  <Fab
+    sx={{
+      background: "linear-gradient(145deg, #ffffff 0%, #e6e6e6 100%)", // glossy gradient
+      border: "2px solid rgba(0,0,0,0.1)",
+      boxShadow:
+        "0 4px 8px rgba(0,0,0,0.2), inset 2px 2px 6px rgba(255,255,255,0.6)", // outer + inner shadows
+      position: "relative",
+      overflow: "hidden",
+      "&:hover": {
+        background: "linear-gradient(145deg, #f9f9f9 0%, #dcdcdc 100%)",
+      },
+    }}
+  >
+    {/* Glossy shine overlay */}
+    <Box
+      sx={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "50%",
+        background:
+          "linear-gradient(to bottom, rgba(255,255,255,0.7), rgba(255,255,255,0))",
+        borderTopLeftRadius: "50%",
+        borderTopRightRadius: "50%",
+      }}
+    />
+
+    {/* Icon/Image in center */}
+    <img
+      src="/ggg.png"
+      alt="Campus Assist"
+      style={{
+        width: 28,
+        height: 28,
+        zIndex: 2,
+      }}
+    />
+  </Fab>
+</Box>
+
       </Tooltip>
 
       <Dialog
@@ -117,22 +153,39 @@ const Chatbot = () => {
             maxWidth: { xs: 'calc(100vw - 32px)', sm: 380 },
             height: { xs: 'calc(100vh - 160px)', sm: 480 },
             borderRadius: 4,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
-            border: '2px solid #F5BABB'
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            background: 'rgba(255,255,255,0.05)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+              borderRadius: 'inherit',
+              zIndex: -1
+            }
           }
         }}
       >
         <Box sx={{ 
-          background: 'linear-gradient(135deg, #568F87, #F5BABB)', 
+          background: 'rgba(0,0,0,0.1)', 
           color: 'white', 
           p: 2, 
           display: 'flex', 
           alignItems: 'center', 
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          backdropFilter: 'blur(40px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+          border: '1px solid rgba(255,255,255,0.1)'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <BotIcon />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>Campus AI 🤖</Typography>
+            <img src="/ggg.png" alt="Campus Assist" style={{ width: 28, height: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: "'Orbitron', 'Roboto Mono', monospace", letterSpacing: '1px' }}>CAMPUS ASSIST</Typography>
           </Box>
           <IconButton onClick={() => setOpen(false)} sx={{ color: 'white' }}>
             <Close />
@@ -144,7 +197,20 @@ const Chatbot = () => {
             flex: 1, 
             overflow: 'auto', 
             p: 1,
-            background: 'linear-gradient(135deg, #f0f2f5 0%, #e8f4f8 100%)',
+            background: 'rgba(255,255,255,0.02)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+              pointerEvents: 'none',
+              zIndex: -1
+            },
             '&::-webkit-scrollbar': {
               display: 'none'
             },
@@ -159,14 +225,15 @@ const Chatbot = () => {
               }}>
                 <Box sx={{
                   maxWidth: '75%',
-                  bgcolor: 'white',
+                  bgcolor: '#fff',
                   borderRadius: '18px 18px 18px 4px',
                   p: 1.5,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                  position: 'relative'
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                  position: 'relative',
+                  border: '1px solid #ddd'
                 }}>
                   <Typography variant="body2" sx={{ color: '#333' }}>
-                    Hi! I'm your Campus Companion 😊 Ask me anything!
+                    Hi! I'm your Campus Assist 😊 Ask me anything!
                   </Typography>
                   <Typography variant="caption" sx={{ color: '#999', mt: 0.5, display: 'block' }}>
                     {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
@@ -183,7 +250,11 @@ const Chatbot = () => {
               }}>
                 <Box sx={{
                   maxWidth: '75%',
-                  bgcolor: message.role === 'user' ? '#DCF8C6' : 'white',
+                  bgcolor: message.role === 'user' 
+                    ? '#fff' 
+                    : '#fff',
+                  color: 'black',
+                  border: '1px solid #ddd',
                   borderRadius: message.role === 'user' 
                     ? '18px 18px 4px 18px' 
                     : '18px 18px 18px 4px',
@@ -198,7 +269,6 @@ const Chatbot = () => {
                   ) : (
                     <Typography variant="body2" sx={{ 
                       whiteSpace: 'pre-wrap',
-                      color: '#333',
                       wordBreak: 'break-word'
                     }}>
                       {message.content}
@@ -223,15 +293,18 @@ const Chatbot = () => {
                 mb: 1
               }}>
                 <Box sx={{
-                  bgcolor: 'white',
+                  bgcolor: 'rgba(255,255,255,0.9)',
                   borderRadius: '18px 18px 18px 4px',
                   p: 1.5,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 1
+                  gap: 1,
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0,0,0,0.1)'
                 }}>
-                  <CircularProgress size={16} sx={{ color: '#568F87' }} />
+                  <CircularProgress size={16} sx={{ color: 'black' }} />
                   <Typography variant="body2" sx={{ color: '#666' }}>Typing...</Typography>
                 </Box>
               </Box>
@@ -242,8 +315,10 @@ const Chatbot = () => {
           
           <Box sx={{ 
             p: 1.5, 
-            borderTop: '1px solid #e0e0e0',
-            bgcolor: '#f8f9fa'
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            bgcolor: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)'
           }}>
             <Box sx={{ 
               display: 'flex', 
@@ -277,13 +352,13 @@ const Chatbot = () => {
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
                 sx={{ 
-                  bgcolor: input.trim() ? '#25D366' : '#e0e0e0',
+                  bgcolor: input.trim() ? '#000' : '#e0e0e0',
                   color: 'white',
                   width: 40,
                   height: 40,
                   mr: 0.5,
                   '&:hover': {
-                    bgcolor: input.trim() ? '#128C7E' : '#e0e0e0'
+                    bgcolor: input.trim() ? '#333' : '#e0e0e0'
                   },
                   '&:disabled': {
                     bgcolor: '#e0e0e0',
