@@ -14,7 +14,7 @@ const Chatbot = () => {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const userId = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).id : 'guest';
-
+  const CHAT_URL = import.meta.env.VITE_CHAT_URL || 'http://localhost:3000/chat';
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -32,7 +32,7 @@ const Chatbot = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/chat', {
+      const response = await fetch(CHAT_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
