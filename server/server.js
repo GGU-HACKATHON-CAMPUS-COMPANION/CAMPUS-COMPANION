@@ -28,6 +28,7 @@ app.use(helmet({
 
 // CORS configuration for production
 const allowedOrigins = [
+  process.env.CHATBOT_URL,
   'http://localhost:3000',
   'http://localhost:5173', 
   'http://127.0.0.1:5500',
