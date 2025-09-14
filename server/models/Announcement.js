@@ -23,7 +23,28 @@ const announcementSchema = new mongoose.Schema({
   author: {
     type: String,
     required: true
-  }
+  },
+  authorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  image: {
+    type: String,
+    default: null
+  },
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  pinned: {
+    type: Boolean,
+    default: false
+  },
+  pinnedBy: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 }, {
   timestamps: true
 });

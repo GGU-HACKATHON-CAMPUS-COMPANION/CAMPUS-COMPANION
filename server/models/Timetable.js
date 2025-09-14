@@ -6,38 +6,16 @@ const timetableSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  subject: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  instructor: {
-    type: String,
-    required: true
-  },
-  room: {
-    type: String,
-    required: true
-  },
-  day: {
-    type: String,
-    enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-    required: true
-  },
-  startTime: {
-    type: String,
-    required: true
-  },
-  endTime: {
-    type: String,
-    required: true
-  },
-  semester: {
-    type: String,
+  classId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Class',
     required: true
   }
 }, {
   timestamps: true
 });
+
+// Ensure a user can only enroll in a class once
+timetableSchema.index({ userId: 1, classId: 1 }, { unique: true });
 
 module.exports = mongoose.model('Timetable', timetableSchema);

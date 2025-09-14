@@ -49,4 +49,37 @@ router.post('/profile-image', auth, upload.single('image'), async (req, res) => 
   }
 });
 
+// Announcement image upload
+router.post('/announcement-image', auth, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Check if user is admin
+    const user = await User.findById(req.user.userId);
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        {
+          folder: 'campus-companion/announcements',
+          transformation: [{ width: 800, height: 600, crop: 'limit' }]
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file.buffer);
+    });
+
+    res.json({ imageUrl: result.secure_url });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ message: 'Upload failed', error: error.message });
+  }
+});
+
 module.exports = router;
