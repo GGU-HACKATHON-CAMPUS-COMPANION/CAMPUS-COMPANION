@@ -153,7 +153,7 @@ function Home() {
           </Button>
 
           <Button
-            onClick={() => navigate('https://ggu.edu.in')}
+            href="https://ggu.edu.in"
             sx={{
               background: 'rgba(255, 255, 255, 0.1)',
               color: 'white',
