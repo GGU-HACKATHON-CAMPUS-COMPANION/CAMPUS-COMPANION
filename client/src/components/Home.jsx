@@ -124,7 +124,7 @@ function Home() {
         {/* Buttons */}
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
           <Button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/announcements')}
             sx={{
               background: 'white',
               color: 'black',
@@ -142,12 +142,18 @@ function Home() {
                 color: 'black',
                 border: '2px solid rgba(255, 255, 255, 0.5)',
               },
+              '@media (max-width:600px)': {
+               px: 2,
+               py: 1,
+               fontSize: '0.85rem',
+              },
             }}
           >
             GET STARTED
           </Button>
 
           <Button
+            onClick={() => navigate('https://ggu.edu.in')}
             sx={{
               background: 'rgba(255, 255, 255, 0.1)',
               color: 'white',
@@ -166,6 +172,11 @@ function Home() {
                 background: 'rgba(255, 255, 255, 0.25)',
                 color: 'black',
                 border: '2px solid rgba(255, 255, 255, 0.5)',
+              },
+              '@media (max-width:600px)': {
+               px: 2,
+               py: 1,
+               fontSize: '0.85rem',
               },
             }}
           >
